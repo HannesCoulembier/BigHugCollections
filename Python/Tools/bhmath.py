@@ -1,7 +1,8 @@
 from Tools.log import log, Severity
 
+from math import sqrt
 from enum import IntEnum
-from typing import Union, Iterable, Callable, Iterator, Any
+from typing import Union, Iterable, Callable, Iterator, Any, Self
 from numbers import Complex, Real, Rational, Integral
 
 class SetTypes(IntEnum):
@@ -106,7 +107,15 @@ class Set:
     def __iter__(self)->Iterator:
         return self._generator()
 
-class VecBase:
+class MatBase:
+    def __init__(self, dims:tuple[int], *args:Iterable[Complex]):
+        self.dims = dims
+        self.args = list(*args) # assume row1, row2, ... ordering
+        if len(self.dims) != 2: raise ValueError(f"Invalid number of dimensions for a Matrix (needs 2)")
+        if len(self.args) != dims[0]*dims[1]: raise ValueError(f"Invalid number of arguments for Matrix with dimensions {dims}")
+        """TODO: implement rest"""
+
+class VecBase(MatBase):
     def __init__(self, dim:int, *args:Iterable[Complex]):
         self.dim = dim
         self.args = list(*args)
@@ -129,21 +138,71 @@ class VecBase:
     @w.setter
     def w(self, value:Complex): self.args[3] = value
 
-    def __getitem__(self, key):
+    def __repr__(self) -> str:
+        return f"Vec{self.dim}({', '.join([repr(x) for x in self.args])})"
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, VecBase): return False
+        if value.dim != self.dim: return False
+        if set([value.args[i]==self.args[i] for i in range(self.dim)]) != {True}: return False
+        return True
+    def __hash__(self) -> int:
+        return hash(self.args)
+    def __bool__(self) -> bool:
+        return set([x==0 for x in self.args]) != {False}
+    def __complex__(self) -> complex:
+        if self.dim != 2: return NotImplemented
+        return complex(self.x, self.y)
+    def __len__(self) -> int:
+        return self.dim
+    def __iter__(self) -> Iterator:
+        return iter(self.args)
+    def __getitem__(self, key:int) -> complex:
         return self.args[key]
-    def __setitem__(self, key, value):
+    def __setitem__(self, key:int, value:complex) -> None:
         self.args[key] = value
+    def __contains__(self, value:object) -> bool:
+        return value in self.args
+    def __add__(self, y:object) -> Self:
+        if not isinstance(y, VecBase): return NotImplemented
+        if y.dim != self.dim: return NotImplemented
+        return VecBase(self.dim, [self.args[i]+y[i] for i in range(self.dim)])
+    def __sub__(self, y:object) -> Self:
+        if not isinstance(y, VecBase): return NotImplemented
+        if y.dim != self.dim: return NotImplemented
+        return VecBase(self.dim, [self.args[i]-y[i] for i in range(self.dim)])
+    def __mul__(self, y:object) -> Self:
+        if not isinstance(y, Complex): return NotImplemented
+        return VecBase(self.dim, [y*x for x in self.args])
+    def __rmul__(self, y:object) -> Self:
+        if not isinstance(y, Complex): return NotImplemented
+        return VecBase(self.dim, [y*x for x in self.args])
+    def __truediv__(self, y:object) -> Self:
+        return 1/y * self
+    def __rmul__(self, y:object) -> Self:
+        if not isinstance(y, Complex): return NotImplemented
+        return VecBase(self.dim, [y*x for x in self.args])
+    def __neg__(self) -> Self:
+        return VecBase(self.dim, [-x for x in self.args])
+    def __pos__(self) -> Self:
+        return VecBase(self.dim, [x for x in self.args])
+    def __abs__(self) -> Self:
+        return sqrt(sum([x*x for x in self.args]))
 
 
-def VecBaseConstructor(dim:int)->Callable[[Iterable[Complex]], VecBase]:
+
+
+
+
+
+def Vec(dim:int)->Callable[[Iterable[Complex]], VecBase]:
     if dim < 1: raise ValueError("Dimension must be greater than 0")
     def constructor(*args:Iterable[Complex])->VecBase:
         return VecBase(dim, args)
     return constructor
 
-Vec2 = VecBaseConstructor(2)
-Vec3 = VecBaseConstructor(3)
-Vec4 = VecBaseConstructor(4)
+Vec2 = Vec(2)
+Vec3 = Vec(3)
+Vec4 = Vec(4)
 
 
 class Sets:
