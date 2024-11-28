@@ -2,8 +2,9 @@ from Tools.log import log, Severity
 
 from enum import IntEnum
 from typing import Union, Iterable, Callable, Iterator, Any
+from numbers import Complex, Real, Rational, Integral
 
-class Sets(IntEnum):
+class SetTypes(IntEnum):
 	Empty=0
 	All=1
      
@@ -13,12 +14,14 @@ class Set:
             def __init__(self, gen, conditions):
                 self.iter = iter(gen)
                 self.conditions = conditions
+                self.counter = set([])
             def _meetsConditions(self, x):
                 return set([cond(x) for cond in self.conditions])=={True}
             def __iter__(self):
                 return self
             def __next__(self):
-                while not self._meetsConditions(x:=self.iter.__next__()): pass
+                while not self._meetsConditions(x:=self.iter.__next__()) or x in self.counter: pass
+                self.counter.add(x)
                 return x
 
         def __init__(self, gen, conditions):
@@ -40,7 +43,15 @@ class Set:
             log(self.msg, Severity.crash)
             raise StopIteration()
 
-    def __init__(self, base:Union[Sets, set, list, Iterable], conditions:Iterable[Callable[[Any], bool]] = [lambda x:True])->None:
+    def _meetsConditions(self, x):
+        for cond in self._conditions:
+            try:
+                v = cond(x)
+                if not v: return False
+            except: return False
+        return True
+
+    def __init__(self, base:Union[SetTypes, set, list, Iterable], conditions:Iterable[Callable[[Any], bool]] = [lambda x:True])->None:
         """Creates a new Set object
 
         args:
@@ -48,19 +59,20 @@ class Set:
             conditions (function): Specifies extra conditions on the base that must be met for an item to be in the new Set
         """
 
-        if type(base) == Sets:
-            if base == Sets.Empty:
+        if type(base) == SetTypes:
+            if base == SetTypes.Empty:
                 self._finite = {}
                 self._conditions = []
                 self._generator = self._finite.__iter__
-            elif base == Sets.All:
-                self._finite = Sets.All
+            elif base == SetTypes.All:
+                self._finite = SetTypes.All
                 self._conditions = conditions
-                self._generator = self._NotIterable("This Set is infinite and therefore provides no generator.")
+                self._generator = self._NotIterable("This Set is infinite and provides no generator.")
             else:
                 log("Unkown Sets enum!", Severity.crash)
         elif type(base) == set or type(base) == list:
-            self._finite = set([x for x in base if set([cond(x) for cond in conditions])=={True}]) # filter out all elements of base that do not meet the conditions criteria
+            self._conditions = conditions
+            self._finite = set([x for x in base if self._meetsConditions(x)]) # filter out all elements of base that do not meet the conditions criteria
             self._conditions = [] # after all conditions are applied to the _finite internal set, they serve no more purpose
             self._generator = self._finite.__iter__
         elif isinstance(base, Iterable):
@@ -70,6 +82,85 @@ class Set:
         else:
             log("Unsupported type for Set base!", Severity.crash)
 
+    def contains(self, x):
+        if self._finite == SetTypes.All:
+            return self._meetsConditions(x)
+        if self._finite != None:
+            return x in self._finite
+        # We are dealing with a set made up of conditions and a generator
+        if not self._meetsConditions(x):
+            return False
+        return x in self._generator()
+
+    def __contains__(self, x):
+        return self.contains(x)
+
+    def __str__(self):
+        if self._finite == SetTypes.All:
+            return "Ω with conditions"
+        if self._finite != None:
+            return str(self._finite)
+        # We are dealing with a set made up of conditions and a generator
+        return str(set([x for x in self._generator() if self._meetsConditions(x)]))
     
     def __iter__(self)->Iterator:
         return self._generator()
+
+class VecBase:
+    def __init__(self, dim:int, *args:Iterable[Complex]):
+        self.dim = dim
+        self.args = list(*args)
+        if len(self.args) != self.dim: raise ValueError(f"Invalid number of arguments for Vector with dimension {dim}")
+
+    @property
+    def x(self): return self.args[0]
+    @property
+    def y(self): return self.args[1]
+    @property
+    def z(self): return self.args[2]
+    @property
+    def w(self): return self.args[3]
+    @x.setter
+    def x(self, value:Complex): self.args[0] = value
+    @y.setter
+    def y(self, value:Complex): self.args[1] = value
+    @z.setter
+    def z(self, value:Complex): self.args[2] = value
+    @w.setter
+    def w(self, value:Complex): self.args[3] = value
+
+    def __getitem__(self, key):
+        return self.args[key]
+    def __setitem__(self, key, value):
+        self.args[key] = value
+
+
+def VecBaseConstructor(dim:int)->Callable[[Iterable[Complex]], VecBase]:
+    if dim < 1: raise ValueError("Dimension must be greater than 0")
+    def constructor(*args:Iterable[Complex])->VecBase:
+        return VecBase(dim, args)
+    return constructor
+
+Vec2 = VecBaseConstructor(2)
+Vec3 = VecBaseConstructor(3)
+Vec4 = VecBaseConstructor(4)
+
+
+class Sets:
+    C = Set(SetTypes.All, [lambda x:isinstance(x, Complex)])
+    R = Set(SetTypes.All, [lambda x:isinstance(x, Real)])
+    Q = Set(SetTypes.All, [lambda x:isinstance(x, Rational)]) # any Real number that has numerator and denominator properties
+    Z = Set(SetTypes.All, [lambda x:isinstance(x, Integral)])
+    N = Set(SetTypes.All, [lambda x:(x in Sets.Z) and x >= 0]) # includes 0
+
+    C2 = Set(SetTypes.All, [lambda v:isinstance(v, VecBase) and v.dim == 2])
+    R2 = Set(SetTypes.All, [lambda v:v in Sets.C2] + [lambda v: v[i] in Sets.R for i in range(2)])
+    Q2 = Set(SetTypes.All, [lambda v:v in Sets.C2] + [lambda v: v[i] in Sets.Q for i in range(2)])
+
+    C3 = Set(SetTypes.All, [lambda v:isinstance(v, VecBase) and v.dim == 3])
+    R3 = Set(SetTypes.All, [lambda v:v in Sets.C3] + [lambda v: v[i] in Sets.R for i in range(3)])
+    Q3 = Set(SetTypes.All, [lambda v:v in Sets.C3] + [lambda v: v[i] in Sets.Q for i in range(3)])
+    
+    C4 = Set(SetTypes.All, [lambda v:isinstance(v, VecBase) and v.dim == 4])
+    R4 = Set(SetTypes.All, [lambda v:v in Sets.C4] + [lambda v: v[i] in Sets.R for i in range(4)])
+    Q4 = Set(SetTypes.All, [lambda v:v in Sets.C4] + [lambda v: v[i] in Sets.Q for i in range(4)])
