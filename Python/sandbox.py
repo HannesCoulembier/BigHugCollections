@@ -18,26 +18,48 @@ import Tools.bhmath as math
 
 # print("9+0.2j" in math.Sets.C)
 
-v = math.Vec2(3,4)
-v[0]=5
-v.x=1
-v1=math.Vec2(2,4)
-z=math.Vec3(3,4,4)
-print(v in math.Sets.Q2)
-print(v.x)
-print(repr(v))
-print(v==math.Vec2(2,4))
-print(complex(v))
-print(len(v1))
-for e in reversed(v):
-    print(e)
-print(v+v1)
-print(2*v)
-print(+(2*v)/2)
-v+=v1
-print(v)
+# v = math.Vec2(3+9j,4)
+# print(repr(v))
+# print(v==v)
+# v[0]=5
+# print(v[1,0])
+# v.x=1
+# v1=math.Vec2(2,4)
+# z=math.Vec3(3,4,4)
+# print(v in math.Sets.Q2)
+# print(v.x)
+# print(repr(v))
+# print(v==math.Vec2(2,4))
+# print(complex(v))
+# print(len(v1))
+# for e in reversed(v):
+#     print(e)
+# print(v+v1)
+# print(2*v)
+# print(+(2*v)/2)
+# v+=v1
+# print(v)
+# print(v.len)
 
+# a = math.Matrix[2,3](0,-6,5,-1,2,-1)
+# b = math.Matrix[3,2](-3,-5,-5,-1,-1,-3)
+# c = math.Matrix[2,3](0,-1,2,1,-2,1)
+# print(a*b*c) # should give 'Matrix[2, 3](-9, -7, 41, 6, -6, -6)'
 
+# print(a.t)
+# print(math.sqrt((v.t.conjugate()*v)[0]))
+# print(v.y)
+# print(a[0])
+# print(v.g)
+
+# print(v)
+# print(v.map(lambda z:2*z))
+
+# Mat1x1 = math.Matrix[1,1]
+# m = Mat1x1(2.3+2j)
+
+m = math.Matrix[2,3](0,3,0,0,5,2)
+print(m.RREF)
 
 # import os
 

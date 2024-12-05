@@ -107,102 +107,211 @@ class Set:
     def __iter__(self)->Iterator:
         return self._generator()
 
-class MatBase:
-    def __init__(self, dims:tuple[int], *args:Iterable[Complex]):
-        self.dims = dims
-        self.args = list(*args) # assume row1, row2, ... ordering
-        if len(self.dims) != 2: raise ValueError(f"Invalid number of dimensions for a Matrix (needs 2)")
-        if len(self.args) != dims[0]*dims[1]: raise ValueError(f"Invalid number of arguments for Matrix with dimensions {dims}")
-        """TODO: implement rest"""
+class Matrix:
 
-class VecBase(MatBase):
-    def __init__(self, dim:int, *args:Iterable[Complex]):
-        self.dim = dim
-        self.args = list(*args)
-        if len(self.args) != self.dim: raise ValueError(f"Invalid number of arguments for Vector with dimension {dim}")
+    _class_cache = {} # Stores previously created classes according to their dimension
 
-    @property
-    def x(self): return self.args[0]
-    @property
-    def y(self): return self.args[1]
-    @property
-    def z(self): return self.args[2]
-    @property
-    def w(self): return self.args[3]
-    @x.setter
-    def x(self, value:Complex): self.args[0] = value
-    @y.setter
-    def y(self, value:Complex): self.args[1] = value
-    @z.setter
-    def z(self, value:Complex): self.args[2] = value
-    @w.setter
-    def w(self, value:Complex): self.args[3] = value
+    def __class_getitem__(cls, dims:tuple[int, int])->type:
+        # Check that dims is a tuple of type (dim1, dim2)
+        if not isinstance(dims, tuple): raise TypeError(f"Expected a tuple to specify the dimensions, but got {type(dims)}.")
+        if len(dims) != 2: raise ValueError(f"Expected 2 dimension parameters, but got {len(dims)}.")
+        if not isinstance(dims[0], int) or not isinstance(dims[1], int): raise TypeError(f"Expected dimensions to be of type (int, int), but got ({type(dims[0])}, {type(dims[1])}).")
 
-    def __repr__(self) -> str:
-        return f"Vec{self.dim}({', '.join([repr(x) for x in self.args])})"
-    def __eq__(self, value: object) -> bool:
-        if not isinstance(value, VecBase): return False
-        if value.dim != self.dim: return False
-        if set([value.args[i]==self.args[i] for i in range(self.dim)]) != {True}: return False
-        return True
-    def __hash__(self) -> int:
-        return hash(self.args)
-    def __bool__(self) -> bool:
-        return set([x==0 for x in self.args]) != {False}
-    def __complex__(self) -> complex:
-        if self.dim != 2: return NotImplemented
-        return complex(self.x, self.y)
-    def __len__(self) -> int:
-        return self.dim
-    def __iter__(self) -> Iterator:
-        return iter(self.args)
-    def __getitem__(self, key:int) -> complex:
-        return self.args[key]
-    def __setitem__(self, key:int, value:complex) -> None:
-        self.args[key] = value
-    def __contains__(self, value:object) -> bool:
-        return value in self.args
-    def __add__(self, y:object) -> Self:
-        if not isinstance(y, VecBase): return NotImplemented
-        if y.dim != self.dim: return NotImplemented
-        return VecBase(self.dim, [self.args[i]+y[i] for i in range(self.dim)])
-    def __sub__(self, y:object) -> Self:
-        if not isinstance(y, VecBase): return NotImplemented
-        if y.dim != self.dim: return NotImplemented
-        return VecBase(self.dim, [self.args[i]-y[i] for i in range(self.dim)])
-    def __mul__(self, y:object) -> Self:
-        if not isinstance(y, Complex): return NotImplemented
-        return VecBase(self.dim, [y*x for x in self.args])
-    def __rmul__(self, y:object) -> Self:
-        if not isinstance(y, Complex): return NotImplemented
-        return VecBase(self.dim, [y*x for x in self.args])
-    def __truediv__(self, y:object) -> Self:
-        return 1/y * self
-    def __rmul__(self, y:object) -> Self:
-        if not isinstance(y, Complex): return NotImplemented
-        return VecBase(self.dim, [y*x for x in self.args])
-    def __neg__(self) -> Self:
-        return VecBase(self.dim, [-x for x in self.args])
-    def __pos__(self) -> Self:
-        return VecBase(self.dim, [x for x in self.args])
-    def __abs__(self) -> Self:
-        return sqrt(sum([x*x for x in self.args]))
+        if dims in cls._class_cache: return cls._class_cache[dims] # If the class for this dimension was already created, return that one
+
+        class MatWithDim:
+            def __init__(self, *args: Iterable[Complex], checkValidity:bool=True)->None:
+                self.dims = dims # Should be a tuple like (dim1, dim2)
+                self.args = list(args) # assume row1, row2, ... ordering
+
+                # Checking validity
+                if checkValidity:
+                    if len(self.args) != self.dims[0] * self.dims[1]: raise ValueError(f"Recieved incorrect number of arguments for {self.dims[0]}x{self.dims[1]} Matrix. Expected {self.dims[0] * self.dims[1]}, but got {len(self.args)}.")
+                    for i, e in enumerate(self.args):
+                        if not isinstance(e, Complex): raise TypeError(f"Element at index {i} is of type {type(e)}, but expected Complex.")
+
+            @property
+            def x(self)->Complex: return self.args[0]
+            @x.setter
+            def x(self, value:Complex): self.args[0] = value
+            @property
+            def y(self)->Complex: return self.args[1]
+            @y.setter
+            def y(self, value:Complex): self.args[1] = value
+            @property
+            def z(self)->Complex: return self.args[2]
+            @z.setter
+            def z(self, value:Complex): self.args[2] = value
+            @property
+            def w(self)->Complex: return self.args[3]
+            @w.setter
+            def w(self, value:Complex): self.args[3] = value
+
+            @property
+            def r(self)->Complex: return self.args[0]
+            @r.setter
+            def r(self, value:Complex): self.args[0] = value
+            @property
+            def g(self)->Complex: return self.args[1]
+            @g.setter
+            def g(self, value:Complex): self.args[1] = value
+            @property
+            def b(self)->Complex: return self.args[2]
+            @b.setter
+            def b(self, value:Complex): self.args[2] = value
+            @property
+            def a(self)->Complex: return self.args[3]
+            @a.setter
+            def a(self, value:Complex): self.args[3] = value
+
+            @property
+            def len(self)->Real: return sqrt(sum([z*z.conjugate() for z in self.args]))
+            @property
+            def t(self)->Self: return Matrix[self.dims[1], self.dims[0]](*[self[i,j] for j in range(self.dims[1]) for i in range(self.dims[0])], checkValidity=False)
+            
+            @property
+            def RREF(self) -> Self:
+                """Returns the Reduced Row Echelon Form"""
+                def findNonZeroIndexInColumn(mat, c):
+                    for i in range(c, mat.dims[0]):
+                        if mat[i,c] != 0: return i
+                    return -1
+                def swapColumns(mat, c1, c2):
+                    col1 = [mat[i, c1] for i in range(mat.dims[0])]
+                    col2 = [mat[i, c2] for i in range(mat.dims[0])]
+                    res = mat
+                    for i in range(res.dims[0]):
+                        res[i, c1] = col2[i]
+                        res[i, c2] = col1[i]
+                    return res
+                def swapRows(mat, r1, r2):
+                    col1 = [mat[r1, j] for j in range(mat.dims[1])]
+                    col2 = [mat[r2, j] for j in range(mat.dims[1])]
+                    res = mat
+                    for j in range(res.dims[1]):
+                        res[r1, j] = col2[j]
+                        res[r2, j] = col1[j]
+                    return res
+                    
+                res = Matrix[self.dims](*self.args, checkValidity=False)
+                zeroColsCount = 0 # Number of confirmed columns at the end of the matrix that are 0
+                zeroRowsCount = 0 # Number of confirmed rows at the bottom of the matrix that are 0
+                for c in range(min(self.dims)):
+                    # Make the current column non-zero
+                    while (r:= findNonZeroIndexInColumn(res, c)) == -1:
+                        if c + zeroColsCount >= dims[1]:break # This corresponds to the back columns being filled with zeros up to the current working column, meaning the algorithm has reached its end
+                        zeroColsCount += 1
+                        res = swapColumns(res, c, -zeroColsCount)
+                    if c + zeroColsCount >= dims[1]:break # This corresponds to the back columns being filled with zeros up to the current working column, meaning the algorithm has reached its end
+                    print(r,c, res)
+                    # Bring the row with non-zero element at [r, c] to [c, c]
+                    res = swapRows(res, r, c)
+                
+                return res
 
 
 
+            # TODO: automatically remove these properties when the matrix is not NxN
+            @property
+            def det(self)->Complex:
+                return NotImplemented
+            @property
+            def inv(self)->Self:
+                return NotImplemented
 
+            def __repr__(self) -> str:
+                return f"Matrix[{self.dims[0]}, {self.dims[1]}]({', '.join([repr(x) for x in self.args])})"
+            def __eq__(self, value: object) -> bool:
+                if not isinstance(value, Matrix[self.dims]): return False
+                if set([value.args[i]==self.args[i] for i in range(len(self.args))]) != {True}: return False
+                return True
+            def __hash__(self) -> int:
+                return hash(self.args)
+            def __bool__(self) -> bool:
+                return set([x==0 for x in self.args]) != {False}
+            def __complex__(self) -> complex:
+                if self.dims != (2,1): return NotImplemented
+                return complex(self.x, self.y)
+            def __len__(self) -> int:
+                return self.dims[0]*self.dims[1]
+            def __iter__(self) -> Iterator:
+                return iter(self.args)
+            def __getitem__(self, key:int) -> complex:
+                if isinstance(key, Iterable): # mat[i, j]
+                    if len(key) != 2: return NotImplemented
+                    if (i:=key[0]) < 0: i+=self.dims[0]
+                    if i < 0 or i >= self.dims[0]: raise IndexError("Index out of range")
+                    if (j:=key[1]) < 0: j+=self.dims[1]
+                    if j < 0 or j >= self.dims[1]: raise IndexError("Index out of range")
+                    return self.args[j + i*self.dims[1]]
+                if isinstance(key, Integral): # vec[i]
+                    return self.args[key]
+                return NotImplemented
+            def __setitem__(self, key:int, value:complex) -> None:
+                if not isinstance(value, Complex): raise TypeError(f"Expected value to be of type Complex, but got {type(value)}.")
+                if isinstance(key, Iterable): # mat[i, j]
+                    if len(key) != 2: return NotImplemented
+                    if (i:=key[0]) < 0: i+=self.dims[0]
+                    if i < 0 or i >= self.dims[0]: raise IndexError("Index out of range")
+                    if (j:=key[1]) < 0: j+=self.dims[1]
+                    if j < 0 or j >= self.dims[1]: raise IndexError("Index out of range")
+                    self.args[j + i*self.dims[1]] = value
+                if isinstance(key, Integral): # vec[i]
+                    self.args[key] = value
+                return NotImplemented
+            def __contains__(self, value:object) -> bool:
+                return value in self.args
+            def __add__(self, y:object) -> Self:
+                if not isinstance(y, Matrix[self.dims]): return NotImplemented
+                return Matrix[self.dims](*[x+y[i] for i, x in enumerate(self.args)], checkValidity=False)
+            def __sub__(self, y:object) -> Self:
+                if not isinstance(y, Matrix[self.dims]): return NotImplemented
+                return Matrix[self.dims](*[x-y[i] for i, x in enumerate(self.args)], checkValidity=False)
+            def __mul__(self, y:object) -> Self: # x*y
+                if isinstance(y, Complex):
+                    return Matrix[self.dims](*[x*y for x in self.args], checkValidity=False)
+                if type(y) in cls._class_cache.values():
+                    if self.dims[1] != y.dims[0]: return NotImplemented
+                    return Matrix[self.dims[0],y.dims[1]](*[sum(self[i, k]*y[k, j] for k in range(self.dims[1])) for i in range(self.dims[0]) for j in range(y.dims[1])]) # I could set checkValidity=False, but I don't trust myself
+                return NotImplemented
+            def __rmul__(self, y:object) -> Self: # y*x
+                if not isinstance(y, Complex): return NotImplemented # the case where y is another matrix is covered by that y's __mul__ implementation
+                return Matrix[self.dims](*[x*y for x in self.args], checkValidity=False)
+            def __truediv__(self, y:object) -> Self:
+                if not isinstance(y, Complex): return NotImplemented
+                return 1/y * self
+            def __neg__(self) -> Self:
+                return Matrix[self.dims](*[-x for x in self.args], checkValidity=False)
+            def __pos__(self) -> Self:
+                return Matrix[self.dims](*self.args, checkValidity=False)
 
+            def conjugate(self) -> Self:
+                return Matrix[self.dims](*[x.conjugate() for x in self.args], checkValidity=False)
+            def map(self, f:Callable[[Complex],Complex]) -> Self:
+                return Matrix[self.dims](*[f(x) for x in self.args])
 
+        # Finishing up the class by setting its name and deleting unsensical attributes
+        MatWithDim.__name__ = f"Matrix[{dims[0]}, {dims[1]}]"
+        if dims[1] != 1:
+            del MatWithDim.x
+            del MatWithDim.y
+            del MatWithDim.z
+            del MatWithDim.w
+            del MatWithDim.r
+            del MatWithDim.g
+            del MatWithDim.b
+            del MatWithDim.a
+        
+        cls._class_cache[dims] = MatWithDim
+        return MatWithDim
 
-def Vec(dim:int)->Callable[[Iterable[Complex]], VecBase]:
-    if dim < 1: raise ValueError("Dimension must be greater than 0")
-    def constructor(*args:Iterable[Complex])->VecBase:
-        return VecBase(dim, args)
-    return constructor
+Vec2 = Matrix[2,1]
+Vec3 = Matrix[3,1]
+Vec4 = Matrix[4,1]
 
-Vec2 = Vec(2)
-Vec3 = Vec(3)
-Vec4 = Vec(4)
+Mat2 = Matrix[2,2]
+Mat3 = Matrix[3,3]
+Mat4 = Matrix[4,4]
 
 
 class Sets:
@@ -212,14 +321,14 @@ class Sets:
     Z = Set(SetTypes.All, [lambda x:isinstance(x, Integral)])
     N = Set(SetTypes.All, [lambda x:(x in Sets.Z) and x >= 0]) # includes 0
 
-    C2 = Set(SetTypes.All, [lambda v:isinstance(v, VecBase) and v.dim == 2])
+    C2 = Set(SetTypes.All, [lambda v:isinstance(v, Vec2)])
     R2 = Set(SetTypes.All, [lambda v:v in Sets.C2] + [lambda v: v[i] in Sets.R for i in range(2)])
     Q2 = Set(SetTypes.All, [lambda v:v in Sets.C2] + [lambda v: v[i] in Sets.Q for i in range(2)])
 
-    C3 = Set(SetTypes.All, [lambda v:isinstance(v, VecBase) and v.dim == 3])
+    C3 = Set(SetTypes.All, [lambda v:isinstance(v, Vec3)])
     R3 = Set(SetTypes.All, [lambda v:v in Sets.C3] + [lambda v: v[i] in Sets.R for i in range(3)])
     Q3 = Set(SetTypes.All, [lambda v:v in Sets.C3] + [lambda v: v[i] in Sets.Q for i in range(3)])
     
-    C4 = Set(SetTypes.All, [lambda v:isinstance(v, VecBase) and v.dim == 4])
+    C4 = Set(SetTypes.All, [lambda v:isinstance(v, Vec4)])
     R4 = Set(SetTypes.All, [lambda v:v in Sets.C4] + [lambda v: v[i] in Sets.R for i in range(4)])
     Q4 = Set(SetTypes.All, [lambda v:v in Sets.C4] + [lambda v: v[i] in Sets.Q for i in range(4)])
