@@ -130,6 +130,16 @@ class Matrix:
                     for i, e in enumerate(self.args):
                         if not isinstance(e, Complex): raise TypeError(f"Element at index {i} is of type {type(e)}, but expected Complex.")
 
+                # Setting up cached values
+                self._cached_RREF = None
+                self._cacheValidationKey = hash(self)
+
+            def _isCacheValid(self):
+                res = self._cacheValidationKey == hash(self)
+                if res != True:
+                    self._cached_RREF = None
+                return res
+
             @property
             def x(self)->Complex: return self.args[0]
             @x.setter
@@ -171,7 +181,11 @@ class Matrix:
             
             @property
             def RREF(self) -> Self:
-                """Returns the Reduced Row Echelon Form"""
+                """Returns the Reduced Row Echelon Form of the Matrix"""
+
+                if self._cached_RREF != None and self._isCacheValid():
+                    return self._cached_RREF
+
                 def findNonZeroIndexInColumn(mat, c):
                     for i in range(c, mat.dims[0]):
                         if mat[i,c] != 0: return i
@@ -192,10 +206,20 @@ class Matrix:
                         res[r1, j] = col2[j]
                         res[r2, j] = col1[j]
                     return res
-                    
+                def divideRow(mat, r, v):
+                    res = mat
+                    for j in range(res.dims[1]):
+                        res[r,j] /= v
+                    return res
+                def LCRows(mat, a, r1, r2): # r2+=a*r1
+                    res = mat
+                    for j in range(res.dims[1]):
+                        res[r2,j] += a * res[r1, j]
+                    return res
+
+
                 res = Matrix[self.dims](*self.args, checkValidity=False)
                 zeroColsCount = 0 # Number of confirmed columns at the end of the matrix that are 0
-                zeroRowsCount = 0 # Number of confirmed rows at the bottom of the matrix that are 0
                 for c in range(min(self.dims)):
                     # Make the current column non-zero
                     while (r:= findNonZeroIndexInColumn(res, c)) == -1:
@@ -203,17 +227,28 @@ class Matrix:
                         zeroColsCount += 1
                         res = swapColumns(res, c, -zeroColsCount)
                     if c + zeroColsCount >= dims[1]:break # This corresponds to the back columns being filled with zeros up to the current working column, meaning the algorithm has reached its end
-                    print(r,c, res)
+
                     # Bring the row with non-zero element at [r, c] to [c, c]
                     res = swapRows(res, r, c)
-                
+                    # Make the first element 1
+                    res = divideRow(res, c, res[c,c])
+
+                    # Make everything above and below zero in that column
+                    for i in range(res.dims[0]):
+                        if i==c: continue
+                        res = LCRows(res, -res[i,c], c, i)
+
+                self._cached_RREF = res
                 return res
 
 
 
             # TODO: automatically remove these properties when the matrix is not NxN
             @property
+            def diag(self) -> list: return [self[i,i] for i in range(self.dims[0])]
+            @property
             def det(self)->Complex:
+                diagRREF = self.RREF.diag
                 return NotImplemented
             @property
             def inv(self)->Self:
@@ -226,7 +261,7 @@ class Matrix:
                 if set([value.args[i]==self.args[i] for i in range(len(self.args))]) != {True}: return False
                 return True
             def __hash__(self) -> int:
-                return hash(self.args)
+                return hash(tuple(self.args))
             def __bool__(self) -> bool:
                 return set([x==0 for x in self.args]) != {False}
             def __complex__(self) -> complex:
@@ -301,6 +336,11 @@ class Matrix:
             del MatWithDim.g
             del MatWithDim.b
             del MatWithDim.a
+        
+        if dims[0] != dims[1]:
+            del MatWithDim.diag
+            del MatWithDim.det
+            del MatWithDim.inv
         
         cls._class_cache[dims] = MatWithDim
         return MatWithDim
