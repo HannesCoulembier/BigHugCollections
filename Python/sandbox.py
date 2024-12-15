@@ -58,15 +58,16 @@ import Tools.bhmath as math
 # Mat1x1 = math.Matrix[1,1]
 # m = Mat1x1(2.3+2j)
 
-m = math.Matrix[3,4](-1,1,0,1,-2,-3,-1,-2,-3,-1,-2,-1)
-print(m.RREF)
-print(m.RREF)
-print(m.RREF)
-print(m.RREF)
-m[0,0]=0
-print(m.RREF)
-a = math.Matrix[2,2](1,2,3,4)
+# m = math.Matrix[3,4](-1,1,0,1,-2,-3,-1,-2,-3,-1,-2,-1)
+# print(m.RREF)
+# print(m.RREF)
+# m[0,0]=0
+# print(m.RREF)
+
+a = math.Matrix[2,2](1,0,3,4)
 print(a.diag)
+print(a.inv)
+print(a*a.inv)
 
 # import os
 

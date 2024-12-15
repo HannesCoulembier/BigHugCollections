@@ -110,6 +110,7 @@ class Set:
 class Matrix:
 
     _class_cache = {} # Stores previously created classes according to their dimension
+    _identity_cache = {} # Stores previously created identity matrices according to their dimension
 
     def __class_getitem__(cls, dims:tuple[int, int])->type:
         # Check that dims is a tuple of type (dim1, dim2)
@@ -132,6 +133,8 @@ class Matrix:
 
                 # Setting up cached values
                 self._cached_RREF = None
+                self._cached_det = None
+                self._cached_inv = None
                 self._cacheValidationKey = hash(self)
 
             def _isCacheValid(self):
@@ -217,7 +220,6 @@ class Matrix:
                         res[r2,j] += a * res[r1, j]
                     return res
 
-
                 res = Matrix[self.dims](*self.args, checkValidity=False)
                 zeroColsCount = 0 # Number of confirmed columns at the end of the matrix that are 0
                 for c in range(min(self.dims)):
@@ -241,18 +243,30 @@ class Matrix:
                 self._cached_RREF = res
                 return res
 
-
-
-            # TODO: automatically remove these properties when the matrix is not NxN
             @property
             def diag(self) -> list: return [self[i,i] for i in range(self.dims[0])]
             @property
-            def det(self)->Complex:
-                diagRREF = self.RREF.diag
+            def det(self) -> Complex: # TODO: finish (implement modified version of RREF)
+                if self._cached_det != None and self._isCacheValid():
+                    return self._cached_det
+                
                 return NotImplemented
+            
             @property
-            def inv(self)->Self:
-                return NotImplemented
+            def inv(self) -> Self:
+                if self._cached_inv != None and self._isCacheValid():
+                    return self._cached_inv
+                
+                id = Matrix.Id(self.dims[0])
+                extendedRREF = (self | id).RREF
+                right = Matrix[self.dims](*[extendedRREF[r,c+self.dims[1]] for r in range(self.dims[0]) for c in range(self.dims[1])])
+                
+                if right*self == id: # Inverse succeeded
+                    self._cached_inv = right
+                    return right
+                self._cached_inv = None
+                self._cached_det = 0
+                raise ZeroDivisionError(f"Cannot calculate inverse as the determinant is 0.")
 
             def __repr__(self) -> str:
                 return f"Matrix[{self.dims[0]}, {self.dims[1]}]({', '.join([repr(x) for x in self.args])})"
@@ -319,6 +333,11 @@ class Matrix:
                 return Matrix[self.dims](*[-x for x in self.args], checkValidity=False)
             def __pos__(self) -> Self:
                 return Matrix[self.dims](*self.args, checkValidity=False)
+            def __or__(self, y:object) -> Self:
+                if type(y) in cls._class_cache.values():
+                    if y.dims[0] != self.dims[0]: return NotImplemented
+                    return Matrix[self.dims[0], self.dims[1]+y.dims[1]](*sum([self.args[r*self.dims[1]: (r+1)*self.dims[1]] + y.args[r*y.dims[1]: (r+1)*y.dims[1]] for r in range(self.dims[0])], []))
+                return NotImplemented
 
             def conjugate(self) -> Self:
                 return Matrix[self.dims](*[x.conjugate() for x in self.args], checkValidity=False)
@@ -345,6 +364,16 @@ class Matrix:
         cls._class_cache[dims] = MatWithDim
         return MatWithDim
 
+    @classmethod
+    def Id(cls, n:int) -> Self:
+        if not isinstance(n, Integral): raise TypeError(f"Expected an int to specify the dimensions, but got {type(n)}.")
+        if n < 1: raise ValueError(f"Dimension of an nxn matrix cannot be less than 1, but got {n}")
+
+        if n in cls._identity_cache: return cls._identity_cache[n] # If the identity matrix for this dimension was already created, return that one
+        
+        cls._class_cache[n] = Matrix[n,n](*[1 if i-j == 0 else 0 for i in range(n) for j in range(n)])
+        return cls._class_cache[n]
+
 Vec2 = Matrix[2,1]
 Vec3 = Matrix[3,1]
 Vec4 = Matrix[4,1]
@@ -353,6 +382,9 @@ Mat2 = Matrix[2,2]
 Mat3 = Matrix[3,3]
 Mat4 = Matrix[4,4]
 
+Id2 = Matrix.Id(2)
+Id3 = Matrix.Id(3)
+Id4 = Matrix.Id(4)
 
 class Sets:
     C = Set(SetTypes.All, [lambda x:isinstance(x, Complex)])
