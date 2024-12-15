@@ -1,4 +1,5 @@
 from Tools.log import log, Severity
+import Tools.constants as Constants
 
 from math import sqrt
 from enum import IntEnum
@@ -135,12 +136,14 @@ class Matrix:
                 self._cached_RREF = None
                 self._cached_det = None
                 self._cached_inv = None
-                self._cacheValidationKey = hash(self)
+                self._cacheValidationKey = hash(self) # Remember: when adding cached values, clear them in _isCacheValid
 
             def _isCacheValid(self):
                 res = self._cacheValidationKey == hash(self)
                 if res != True:
                     self._cached_RREF = None
+                    self._cached_det = None
+                    self._cached_inv = None
                 return res
 
             @property
@@ -189,30 +192,36 @@ class Matrix:
                 if self._cached_RREF != None and self._isCacheValid():
                     return self._cached_RREF
 
+                det = [1]
                 def findNonZeroIndexInColumn(mat, c):
                     for i in range(c, mat.dims[0]):
                         if mat[i,c] != 0: return i
                     return -1
-                def swapColumns(mat, c1, c2):
+                def swapColumns(mat, c1, c2, det=det):
                     col1 = [mat[i, c1] for i in range(mat.dims[0])]
                     col2 = [mat[i, c2] for i in range(mat.dims[0])]
                     res = mat
                     for i in range(res.dims[0]):
                         res[i, c1] = col2[i]
                         res[i, c2] = col1[i]
+                    if c1 != c2:
+                        det[0] *= -1
                     return res
-                def swapRows(mat, r1, r2):
+                def swapRows(mat, r1, r2, det=det):
                     col1 = [mat[r1, j] for j in range(mat.dims[1])]
                     col2 = [mat[r2, j] for j in range(mat.dims[1])]
                     res = mat
                     for j in range(res.dims[1]):
                         res[r1, j] = col2[j]
                         res[r2, j] = col1[j]
+                    if r1 != r2:
+                        det[0] *= -1
                     return res
-                def divideRow(mat, r, v):
+                def divideRow(mat, r, v, det=det):
                     res = mat
                     for j in range(res.dims[1]):
                         res[r,j] /= v
+                    det[0] *= v
                     return res
                 def LCRows(mat, a, r1, r2): # r2+=a*r1
                     res = mat
@@ -240,18 +249,24 @@ class Matrix:
                         if i==c: continue
                         res = LCRows(res, -res[i,c], c, i)
 
+                # Finish calculating the determinant:
+                for i in range(min(self.dims)):
+                    det[0] *= res[i,i]
+
                 self._cached_RREF = res
+                self._cached_det = det[0]
                 return res
 
             @property
             def diag(self) -> list: return [self[i,i] for i in range(self.dims[0])]
             @property
-            def det(self) -> Complex: # TODO: finish (implement modified version of RREF)
+            def det(self) -> Complex:
                 if self._cached_det != None and self._isCacheValid():
                     return self._cached_det
                 
-                return NotImplemented
-            
+                self._cached_RREF = None
+                self.RREF # Calculates and stores determinant as well
+                return self._cached_det
             @property
             def inv(self) -> Self:
                 if self._cached_inv != None and self._isCacheValid():
@@ -261,7 +276,7 @@ class Matrix:
                 extendedRREF = (self | id).RREF
                 right = Matrix[self.dims](*[extendedRREF[r,c+self.dims[1]] for r in range(self.dims[0]) for c in range(self.dims[1])])
                 
-                if right*self == id: # Inverse succeeded
+                if Matrix.isZeroMat(right*self-id): # Inverse succeeded
                     self._cached_inv = right
                     return right
                 self._cached_inv = None
@@ -373,6 +388,14 @@ class Matrix:
         
         cls._class_cache[n] = Matrix[n,n](*[1 if i-j == 0 else 0 for i in range(n) for j in range(n)])
         return cls._class_cache[n]
+
+    @classmethod
+    def isZeroMat(cls, y:Self) -> bool:
+        if not type(y) in cls._class_cache.values(): return False
+        for item in y.args:
+            if abs(item) > Constants.floatEpsilon:
+                return False
+        return True
 
 Vec2 = Matrix[2,1]
 Vec3 = Matrix[3,1]

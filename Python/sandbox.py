@@ -64,8 +64,10 @@ import Tools.bhmath as math
 # m[0,0]=0
 # print(m.RREF)
 
-a = math.Matrix[2,2](1,0,3,4)
+a = math.Matrix[2,2](3,4,2,-5)
 print(a.diag)
+print(a.RREF)
+print(a.det)
 print(a.inv)
 print(a*a.inv)
 
