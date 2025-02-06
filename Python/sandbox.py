@@ -1,6 +1,8 @@
 import Tools.color as color
 import Tools.io as io
 import Tools.bhmath as math
+
+
 # empty = math.Set(math.SetTypes.Empty)
 
 # oneTwo = math.Set({1,2})
@@ -12,11 +14,34 @@ import Tools.bhmath as math
 # finGen = math.Set(range(10))
 # finGenCond = math.Set(range(10), [lambda x: x%2==0])
 
-# print(empty)
+
+# class NatNumGen:
+#     class _Internal:
+#         def __init__(self):
+#             self.i=0
+#         def __iter__(self):
+#             return self
+#         def __next__(self):
+#             self.i+=1
+#             return self.i
+
+#     def __init__(self):
+#         pass
+#     def __call__(self):
+#         return self.__iter__()
+#     def __iter__(self):
+#         return self._Internal()
+
+# test = math.Set(NatNumGen())
+# test2 = math.Set(test, [lambda x: x%2==0])
+# print(-1 in test2)
+# print(finGen)
 # for e in empty:
 #     print(e)
 
 # print("9+0.2j" in math.Sets.C)
+int1 = math.Interval(2,2,True,True)
+print(int1)
 
 # v = math.Vec2(3+9j,4)
 # print(repr(v))
@@ -64,12 +89,12 @@ import Tools.bhmath as math
 # m[0,0]=0
 # print(m.RREF)
 
-a = math.Matrix[2,2](3,4,2,-5)
-print(a.diag)
-print(a.RREF)
-print(a.det)
-print(a.inv)
-print(a*a.inv)
+# a = math.Matrix[2,2](3+1j,4,2,-5)
+# print(a.diag)
+# print(a.RREF)
+# print(a.det)
+# print(a.inv)
+# print(a*a.inv)
 
 # import os
 
