@@ -19,11 +19,14 @@ class Result(IntEnum):
     def __bool__(self):
         if self.value == 0: return False
         elif self.value == 1: return True
-        else: raise NotImplementedError("UNSURE Result cannot be converted to boolean")
-    
-    def __str__(self)->str:
-        return str(self.name)
-    
+        else: raise TypeError("UNSURE Result cannot be converted to boolean")
+    def __str__(self) -> str:
+        return str(self.name) 
+    def __repr__(self) -> str:
+        return self.__str__()  
+    def __eq__(self, y:Any) -> bool:
+        if type(y) != Result: return NotImplemented
+        return self.value == y.value
     def __or__(self, y:Any)->Self:
         if type(y) != Result: return NotImplemented
         if self.value == Result.TRUE or y.value == Result.TRUE: return Result.TRUE
@@ -32,7 +35,7 @@ class Result(IntEnum):
     def __and__(self, y:Any)->Self:
         if type(y) != Result: return NotImplemented
         if self.value == Result.FALSE or y.value == Result.FALSE: return Result.FALSE
-        if self.value == Result.UNSURE and y.value == Result.UNSURE: return Result.UNSURE
+        if self.value == Result.UNSURE or y.value == Result.UNSURE: return Result.UNSURE
         return Result.TRUE
 
      
@@ -217,8 +220,8 @@ class Relation:
     def __call__(self, A, B)->Result:
         inA = self.setA.contains(A)
         inB = self.setB.contains(B)
-        if inA and inB == Result.FALSE: return Result.FALSE
-        if inA and inB == Result.UNSURE: return Result.UNSURE
+        if inA & inB == Result.FALSE: return Result.FALSE
+        if inA & inB == Result.UNSURE: return Result.UNSURE
         try:
             result = self.relation(A, B)
         except:
@@ -275,7 +278,7 @@ class Function:
 _ComplexNumbers = Set(SetTypes.All, [lambda x:isinstance(x, Complex)])
 _RealNumbers = Set(SetTypes.All, [lambda x:isinstance(x, Real)], parents={_ComplexNumbers})
 _AllFunctions = Set(SetTypes.All, [lambda x:type(x)==Function])
-_ComplexFunctions = Set(SetTypes.All, [lambda x: _AllFunctions.contains(x) and x.domain.isSubset(_ComplexNumbers)], parents={_AllFunctions})
+_ComplexFunctions = Set(SetTypes.All, [lambda x: _AllFunctions.contains(x) & x.domain.isSubset(_ComplexNumbers)], parents={_AllFunctions})
 
 class SymbolicInfinity:
     def __init__(self, pos=True):
