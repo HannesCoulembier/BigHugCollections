@@ -42,10 +42,13 @@ print(condOneTwo.isSubSetOf(oneTwo))
 
 # print("9+0.2j" in math.Sets.C)
 
+func1 = math.Function(lambda x:3*x, math.Sets.R, math.Sets.R, lambda x:x/3)
+print(func1.domain)
+
 rel1 = math.Relation(oneTwo, finGen, lambda a, b=2: a%2==b%2)
 print(rel1(3,1))
 
-f1 = math.Function(lambda x:5*x, oneTwo, finGenCond)
+f1 = math.Function(lambda x:3*x, oneTwo, finGenCond)
 print(f1(2))
 
 int1 = math.Interval(2,2,True,True)

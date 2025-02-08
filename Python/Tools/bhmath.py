@@ -17,10 +17,23 @@ class Result(IntEnum):
     UNSURE=2
 
     def __bool__(self):
-        raise NotImplementedError("Cannot convert Result to boolean as it could be unsure")
+        if self.value == 0: return False
+        elif self.value == 1: return True
+        else: raise NotImplementedError("UNSURE Result cannot be converted to boolean")
     
     def __str__(self)->str:
         return str(self.name)
+    
+    def __or__(self, y:Any)->Self:
+        if type(y) != Result: return NotImplemented
+        if self.value == Result.TRUE or y.value == Result.TRUE: return Result.TRUE
+        if self.value == Result.UNSURE or y.value == Result.UNSURE: return Result.UNSURE
+        return Result.FALSE
+    def __and__(self, y:Any)->Self:
+        if type(y) != Result: return NotImplemented
+        if self.value == Result.FALSE or y.value == Result.FALSE: return Result.FALSE
+        if self.value == Result.UNSURE and y.value == Result.UNSURE: return Result.UNSURE
+        return Result.TRUE
 
      
 class Set:
@@ -99,15 +112,15 @@ class Set:
             log(self.msg, Severity.warn)
             raise StopIteration()
 
-    def _meetsConditions(self, x) -> bool:
+    def _meetsConditions(self, x) -> Result:
         for cond in self._conditions:
             try:
                 v = cond(x)
-                if not v: return False
-            except: return False
-        return True
+                if v != Result.TRUE: return v
+            except: return Result.FALSE
+        return Result.TRUE
 
-    def __init__(self, base:Union[SetTypes, set, list, Iterable, Self], conditions:Iterable[Callable[[Any], bool]] = [lambda x:True], parents:set[Self]={})->None:
+    def __init__(self, base:Union[SetTypes, set, list, Iterable, Self], conditions:Iterable[Callable[[Any], Result]] = [lambda x:Result.TRUE], parents:set[Self]=set())->None:
         """Creates a new Set object
 
         args:
@@ -143,6 +156,8 @@ class Set:
             else:
                 self._generator = self._JoinGenerators(self._GeneratorWithCond(base._generator, self._conditions), self._NotIterable("This Set is infinite and provides no generator."))
             self._conditions += base._conditions
+            self.parents.add(base)
+            self.allParents.add(base)
         elif isinstance(base, Iterable):
             self._finite = None
             self._generator = self._GeneratorWithCond(base, self._conditions)
@@ -156,18 +171,18 @@ class Set:
 
         if type(self._finite) == set:
             for el in self._finite:
-                if not el in x: return Result.FALSE
+                if x.contains(el) == Result.FALSE: return Result.FALSE
             if self._generator == self._finite.__iter__: return Result.TRUE # If the Set generator is the same as its _finite generator, the set is certainly finite and all of its elements are checked in the code above
 
         if type(x._finite) == set and self._generator != self._NotIterable("This Set is infinite and provides no generator."):
             if x._generator == x._finite.__iter__: # If the Set generator is the same as its _finite generator, the set is certainly finite
                 # Strategy: we iterate over all elements in self._generator and check if they are in x. Because x is certainly finite, if self is a subset of x, this will halt. If self is finite, this will also halt and if self is infinite (or just greater than x) eventually an item will be found that does not belong to x and this will also halt.
                 for el in self._generator:
-                    if not el in x: return Result.FALSE
+                    if x.contains(el) == Result.FALSE: return Result.FALSE
                 return Result.TRUE
         return Result.UNSURE
 
-    def contains(self, x:Any) -> bool:
+    def contains(self, x:Any) -> Result:
         if self._finite == SetTypes.All:
             return self._meetsConditions(x)
         if self._finite != None:
@@ -176,9 +191,6 @@ class Set:
         if not self._meetsConditions(x):
             return False
         return x in self._generator()
-
-    def __contains__(self, x) -> bool:
-        return self.contains(x)
 
     def __repr__(self)->str:
         if self._finite == SetTypes.All:
@@ -192,7 +204,7 @@ class Set:
         return self._generator()
 
 class Relation:
-    def __init__(self, setA:Set, setB:Set, relation:Callable[[Any, Any], bool]):
+    def __init__(self, setA:Set, setB:Set, relation:Callable[[Any, Any], Union[Result, bool]]):
         self.setA = setA
         self.setB = setB
         self.relation = relation
@@ -202,14 +214,21 @@ class Relation:
         if not isinstance(relation, Callable): raise TypeError("Expected relation parameter to be callable")
         if len(inspect.signature(relation).parameters) != 2: raise TypeError("Expected relation parameter to have exactly two arguments")
 
-    def __call__(self, A, B):
-        if not A in self.setA or not B in self.setB: return False
+    def __call__(self, A, B)->Result:
+        inA = self.setA.contains(A)
+        inB = self.setB.contains(B)
+        if inA and inB == Result.FALSE: return Result.FALSE
+        if inA and inB == Result.UNSURE: return Result.UNSURE
         try:
             result = self.relation(A, B)
         except:
-            return False
-        if type(result) != bool: raise TypeError("This Relation has an incorrectly defined relation function, as it did not return a boolean")
-        return result
+            return Result.FALSE
+        if type(result) == bool:
+            return Result.TRUE if result else Result.FALSE
+        elif type(result) == Result:
+            return result
+        else:
+            raise TypeError("This Relation has an incorrectly defined relation function, as it did not return a boolean or a Result")
 
 class Function:
     def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=Set(SetTypes.All), invFunc:Union[Callable[[Any], Any], None]=None):
@@ -236,13 +255,13 @@ class Function:
         return Function(self.invFunc, self.codomain, self.domain, self.func)
 
     def __call__(self, x:Any)->Any:
-        if not x in self.domain: raise log("x is not part of the domain of this function", Severity.warn)
+        if self.domain.contains(x) == Result.FALSE: raise log("x is not part of the domain of this function", Severity.warn)
 
         try:
             y = self.func(x)
         except:
             raise log("x is not part of the domain of this function", Severity.warn)
-        if not y in self.codomain: log("This function is not correctly defined, as it yielded a result that was outside of its codomain", Severity.warn)
+        if self.codomain.contains(y) == Result.FALSE: log("This function is not correctly defined, as it yielded a result that was outside of its codomain", Severity.warn)
         
         if self.invFunc != None:
             try:
@@ -255,6 +274,8 @@ class Function:
 
 _ComplexNumbers = Set(SetTypes.All, [lambda x:isinstance(x, Complex)])
 _RealNumbers = Set(SetTypes.All, [lambda x:isinstance(x, Real)], parents={_ComplexNumbers})
+_AllFunctions = Set(SetTypes.All, [lambda x:type(x)==Function])
+_ComplexFunctions = Set(SetTypes.All, [lambda x: _AllFunctions.contains(x) and x.domain.isSubset(_ComplexNumbers)], parents={_AllFunctions})
 
 class SymbolicInfinity:
     def __init__(self, pos=True):
@@ -272,11 +293,11 @@ class SymbolicInfinity:
     
     def __gt__(self, y:Any):
         if type(y) == SymbolicInfinity: return self.pos==True and y.pos==False
-        if y in _RealNumbers: return self.pos
+        if _RealNumbers.contains(y): return self.pos
         return NotImplemented
     def __lt__(self, y:Any):
         if type(y) == SymbolicInfinity: return self.pos==False and y.pos==True
-        if y in _RealNumbers: return not self.pos
+        if _RealNumbers.contains(y): return not self.pos
         return NotImplemented
     def __ge__(self, y:Any):
         return self == y or self > y
@@ -297,11 +318,8 @@ class Interval:
         if a == b and (not includeA or not includeB): raise ValueError("If a and b are equal, both includeA and includeB need to be True")
         if b < a: raise ValueError("a must be less than b")
     
-    def contains(self, x:Any)->bool:
-        return x in self.set
-
-    def __contains__(self, x:Any)->bool:
-        return self.contains(x)
+    def contains(self, x:Any)->Result:
+        return self.set.contains(x)
 
     def __repr__(self)->str:
         p1="[" if self.includeA else "]"
@@ -615,16 +633,16 @@ class Sets:
     R = _RealNumbers
     Q = Set(SetTypes.All, [lambda x:isinstance(x, Rational)], parents={_RealNumbers}) # any Real number that has numerator and denominator properties
     Z = Set(SetTypes.All, [lambda x:isinstance(x, Integral)], parents={Q})
-    N = Set(SetTypes.All, [lambda x:(x in Sets.Z) and x >= 0], parents={Z}) # includes 0
+    N = Set(SetTypes.All, [lambda x:Sets.Z.contains(x) and x >= 0], parents={Z}) # includes 0
 
     C2 = Set(SetTypes.All, [lambda v:isinstance(v, Vec2)])
-    R2 = Set(SetTypes.All, [lambda v:v in Sets.C2] + [lambda v: v[i] in Sets.R for i in range(2)], parents={C2})
-    Q2 = Set(SetTypes.All, [lambda v:v in Sets.C2] + [lambda v: v[i] in Sets.Q for i in range(2)], parents={R2})
+    R2 = Set(SetTypes.All, [lambda v:Sets.C2.contains(v)] + [lambda v: Sets.R.contains(v[i]) for i in range(2)], parents={C2})
+    Q2 = Set(SetTypes.All, [lambda v:Sets.C2.contains(v)] + [lambda v: Sets.Q.contains(v[i]) for i in range(2)], parents={R2})
 
     C3 = Set(SetTypes.All, [lambda v:isinstance(v, Vec3)])
-    R3 = Set(SetTypes.All, [lambda v:v in Sets.C3] + [lambda v: v[i] in Sets.R for i in range(3)], parents={C3})
-    Q3 = Set(SetTypes.All, [lambda v:v in Sets.C3] + [lambda v: v[i] in Sets.Q for i in range(3)], parents={R3})
+    R3 = Set(SetTypes.All, [lambda v:Sets.C3.contains(v)] + [lambda v: Sets.R.contains(v[i]) for i in range(3)], parents={C3})
+    Q3 = Set(SetTypes.All, [lambda v:Sets.C3.contains(v)] + [lambda v: Sets.Q.contains(v[i]) for i in range(3)], parents={R3})
     
     C4 = Set(SetTypes.All, [lambda v:isinstance(v, Vec4)])
-    R4 = Set(SetTypes.All, [lambda v:v in Sets.C4] + [lambda v: v[i] in Sets.R for i in range(4)], parents={C4})
-    Q4 = Set(SetTypes.All, [lambda v:v in Sets.C4] + [lambda v: v[i] in Sets.Q for i in range(4)], parents={R4})
+    R4 = Set(SetTypes.All, [lambda v:Sets.C4.contains(v)] + [lambda v: Sets.R.contains(v[i]) for i in range(4)], parents={C4})
+    Q4 = Set(SetTypes.All, [lambda v:Sets.C4.contains(v)] + [lambda v: Sets.Q.contains(v[i]) for i in range(4)], parents={R4})
