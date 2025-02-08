@@ -3,17 +3,18 @@ import Tools.io as io
 import Tools.bhmath as math
 
 
-# empty = math.Set(math.SetTypes.Empty)
+empty = math.Set(math.SetTypes.Empty)
 
-# oneTwo = math.Set({1,2})
-# condOneTwo = math.Set({1,2}, [lambda x: x%2==0])
+oneTwo = math.Set({1,2})
+condOneTwo = math.Set({1,2}, [lambda x: x%2==0])
 
-# all = math.Set(math.SetTypes.All)
-# allCond = math.Set(math.SetTypes.All, [lambda x: x%2==0])
+all = math.Set(math.SetTypes.All)
+allCond = math.Set(math.SetTypes.All, [lambda x: x%2==0])
 
-# finGen = math.Set(range(10))
-# finGenCond = math.Set(range(10), [lambda x: x%2==0])
+finGen = math.Set(range(10))
+finGenCond = math.Set(range(10), [lambda x: x%2==0])
 
+print(condOneTwo.isSubSetOf(oneTwo))
 
 # class NatNumGen:
 #     class _Internal:
@@ -40,6 +41,13 @@ import Tools.bhmath as math
 #     print(e)
 
 # print("9+0.2j" in math.Sets.C)
+
+rel1 = math.Relation(oneTwo, finGen, lambda a, b=2: a%2==b%2)
+print(rel1(3,1))
+
+f1 = math.Function(lambda x:5*x, oneTwo, finGenCond)
+print(f1(2))
+
 int1 = math.Interval(2,2,True,True)
 print(int1)
 
