@@ -46,8 +46,13 @@ class Set:
                 self.iter = iter(gen)
                 self.conditions = conditions
                 self.counter = set([])
-            def _meetsConditions(self, x):
-                return set([cond(x) for cond in self.conditions])=={True}
+            def _meetsConditions(self, x:Any) -> Result:
+                for cond in self.conditions:
+                    try:
+                        v = cond(x)
+                        if v != Result.TRUE: return v
+                    except: return Result.FALSE
+                return Result.TRUE
             def __iter__(self):
                 return self
             def __next__(self):
@@ -221,11 +226,14 @@ class Relation:
         inA = self.setA.contains(A)
         inB = self.setB.contains(B)
         if inA & inB == Result.FALSE: return Result.FALSE
-        if inA & inB == Result.UNSURE: return Result.UNSURE
+
         try:
             result = self.relation(A, B)
         except:
             return Result.FALSE
+        
+        if inA & inB == Result.UNSURE: return Result.UNSURE
+
         if type(result) == bool:
             return Result.TRUE if result else Result.FALSE
         elif type(result) == Result:
@@ -282,18 +290,15 @@ _ComplexFunctions = Set(SetTypes.All, [lambda x: _AllFunctions.contains(x) & x.d
 
 class SymbolicInfinity:
     def __init__(self, pos=True):
+        if type(pos) != bool: raise TypeError("The argument 'pos' should be a boolean, signaling wether the infinity is positive or negative")
         self.pos = pos
-
     def __repr__(self)->str:
         return "\u221e" if self.pos else "-\u221e"
-    
     def __eq__(self, y:Any)->bool:
-        if type(y) != SymbolicInfinity: return False
+        if type(y) != SymbolicInfinity: return NotImplemented
         return self.pos == y.pos
-    
     def __neg__(self)->Self:
         return SymbolicInfinity(not self.pos)
-    
     def __gt__(self, y:Any):
         if type(y) == SymbolicInfinity: return self.pos==True and y.pos==False
         if _RealNumbers.contains(y): return self.pos
@@ -303,8 +308,10 @@ class SymbolicInfinity:
         if _RealNumbers.contains(y): return not self.pos
         return NotImplemented
     def __ge__(self, y:Any):
+        if self.__gt__(y) == NotImplemented: return NotImplemented
         return self == y or self > y
     def __le__(self, y:Any):
+        if self.__lt__(y) == NotImplemented: return NotImplemented
         return self == y or self < y
     
 SymInf = SymbolicInfinity(True)

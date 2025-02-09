@@ -2,7 +2,7 @@ from Tools.tester import Tester
 
 import Tools.bhmath as math
 
-
+# ----- All individual tests ----------------------------------------------------------------------
 class TestMathResult(Tester):
     """Tests if the Result class works as intended"""
     def ResultToBool() -> bool:
@@ -80,6 +80,110 @@ class TestMathResult(Tester):
         if math.Result.TRUE.__and__("Dummy")   != NotImplemented: return False
         return True
 
+class TestMathSymbolicInfinity(Tester):
+    """Tests if the SymbolicInfinity class works as intended"""
+    def Constructor() -> bool:
+        """Tests if the __init__ method works as intended"""
+        try:
+            T1 = math.SymbolicInfinity(True)
+            T2 = math.SymbolicInfinity()
+            F = math.SymbolicInfinity(False)
+            if T1 != T2: return False
+        except:
+            return False
+        try:
+            math.SymbolicInfinity("Dummy")
+            return False
+        except:
+            return True
+    def StringRepresentation() -> bool:
+        """Tests if the __str__ and __repr__ methods work as intended"""
+
+        Pr = math.SymbolicInfinity(True).__repr__()
+        Nr = math.SymbolicInfinity(False).__repr__()
+
+        Ps = math.SymbolicInfinity(True).__str__()
+        Ns = math.SymbolicInfinity(False).__str__()
+
+        return [Pr, Nr, Ps, Ns] == ["\u221e", "-\u221e", "\u221e", "-\u221e"]
+    def EqualityOperator() -> bool:
+        """Tests if the __eq__ method works as intended"""
+        if (math.SymbolicInfinity(False) == math.SymbolicInfinity(False)) != True:  return False
+        if (math.SymbolicInfinity(False) == math.SymbolicInfinity(True))  != False: return False
+        if (math.SymbolicInfinity(True)  == math.SymbolicInfinity(False)) != False: return False
+        if (math.SymbolicInfinity(True)  == math.SymbolicInfinity(True))  != True:  return False
+        
+        if math.SymbolicInfinity(False).__eq__("Dummy")  != NotImplemented: return False
+        if math.SymbolicInfinity(True).__eq__("Dummy")   != NotImplemented: return False
+        return True
+    def NegationOperator() -> bool:
+        """Tests if the __neg__ method works as intended"""
+        if -math.SymbolicInfinity(False) != math.SymbolicInfinity(True):  return False
+        if -math.SymbolicInfinity(True)  != math.SymbolicInfinity(False): return False
+        return True
+    def ComparisonOperators() -> bool:
+        """Tests if the __gt__, __lt__, __ge__ and __le__ methods work as intended"""
+        P = math.SymbolicInfinity()
+        N = -P
+        if (N >  N) != False: return False
+        if (N >  P) != False: return False
+        if (P >  N) != True:  return False
+        if (P >  P) != False: return False
+        if (N >= N) != True:  return False
+        if (N >= P) != False: return False
+        if (P >= N) != True:  return False
+        if (P >= P) != True:  return False
+        if (N <  N) != False: return False
+        if (N <  P) != True:  return False
+        if (P <  N) != False: return False
+        if (P <  P) != False: return False
+        if (N <= N) != True:  return False
+        if (N <= P) != True:  return False
+        if (P <= N) != False: return False
+        if (P <= P) != True:  return False
+
+        if (N >  0) != False: return False
+        if (P >  0) != True:  return False
+        if (N >= 0) != False: return False
+        if (P >= 0) != True:  return False
+        if (N <  0) != True:  return False
+        if (P <  0) != False: return False
+        if (N <= 0) != True:  return False
+        if (P <= 0) != False: return False
+        if (N >  28.71) != False: return False
+        if (P >  28.71) != True:  return False
+        if (N >= 28.71) != False: return False
+        if (P >= 28.71) != True:  return False
+        if (N <  28.71) != True:  return False
+        if (P <  28.71) != False: return False
+        if (N <= 28.71) != True:  return False
+        if (P <= 28.71) != False: return False
+        
+        if N.__gt__("Dummy") != NotImplemented: return False
+        if P.__gt__("Dummy") != NotImplemented: return False
+        if N.__ge__("Dummy") != NotImplemented: return False
+        if P.__ge__("Dummy") != NotImplemented: return False
+        if N.__lt__("Dummy") != NotImplemented: return False
+        if P.__lt__("Dummy") != NotImplemented: return False
+        if N.__le__("Dummy") != NotImplemented: return False
+        if P.__le__("Dummy") != NotImplemented: return False
+        
+        if N.__gt__(1.2+0.3j) != NotImplemented: return False
+        if P.__gt__(1.2+0.3j) != NotImplemented: return False
+        if N.__ge__(1.2+0.3j) != NotImplemented: return False
+        if P.__ge__(1.2+0.3j) != NotImplemented: return False
+        if N.__lt__(1.2+0.3j) != NotImplemented: return False
+        if P.__lt__(1.2+0.3j) != NotImplemented: return False
+        if N.__le__(1.2+0.3j) != NotImplemented: return False
+        if P.__le__(1.2+0.3j) != NotImplemented: return False
+        return True
 
 
-TestMathResult()
+# ----- Grouped tests -----------------------------------------------------------------------------
+class TestAllMathTests(Tester):
+    """Runs all the Math tests"""
+    def Result() -> bool: return TestMathResult(True)
+    def SymbolicInfinity() -> bool: return TestMathSymbolicInfinity(True)
+
+
+TestAllMathTests()
