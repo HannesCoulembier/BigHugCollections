@@ -1,7 +1,11 @@
 import Tools.bhcolor as color
 import Tools.bhio as io
 import Tools.bhmath as math
+import Tools.bhhelper as helper
 
+for j in helper.JoinedIterator([(i/1000 for i in range(4)),(i for i in math.SuccessorIterator())]):
+    print(j)
+    if j>10: break
 
 empty = math.Set(math.SetTypes.Empty)
 

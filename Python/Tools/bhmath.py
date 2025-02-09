@@ -38,7 +38,17 @@ class Result(IntEnum):
         if self.value == Result.UNSURE or y.value == Result.UNSURE: return Result.UNSURE
         return Result.TRUE
 
-     
+class SuccessorIterator(Iterator):
+    """Iterator that only counts up and never stops. Can create infinite loops, so be careful"""
+    def __init__(self):
+        self.count = 0
+    def __iter__(self) -> Self:
+        return self
+    def __next__(self) -> int:
+        count = self.count
+        self.count += 1
+        return count
+
 class Set:
     class _GeneratorWithCond:
         class _InternalWithCond:
