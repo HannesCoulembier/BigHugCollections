@@ -16,7 +16,7 @@ class TestMathResult(Tester):
         
         try:
             U = bool(math.Result.UNSURE) # Trying to convert Result.UNSURE should raise a TypeError
-        except TypeError:
+        except NotImplementedError:
             return True
         return False # This will run when either the conversion in the try block succeeded or the wrong exception was thrown
     def StringRepresentation() -> bool:
@@ -48,7 +48,7 @@ class TestMathResult(Tester):
         if math.Result.TRUE.__eq__("Dummy")   != NotImplemented: return False
         return True
     def OrOperator() -> bool:
-        """Tests if the __or__ method works as intended"""
+        """Tests if the __ror__ methods work as intended"""
         if (math.Result.FALSE  | math.Result.FALSE)  != math.Result.FALSE:  return False
         if (math.Result.FALSE  | math.Result.UNSURE) != math.Result.UNSURE: return False
         if (math.Result.FALSE  | math.Result.TRUE)   != math.Result.TRUE:   return False
@@ -58,13 +58,28 @@ class TestMathResult(Tester):
         if (math.Result.TRUE   | math.Result.FALSE)  != math.Result.TRUE:   return False
         if (math.Result.TRUE   | math.Result.UNSURE) != math.Result.TRUE:   return False
         if (math.Result.TRUE   | math.Result.TRUE)   != math.Result.TRUE:   return False
+        if (math.Result.FALSE  | False) != math.Result.FALSE:  return False
+        if (math.Result.FALSE  | True)  != math.Result.TRUE:   return False
+        if (math.Result.UNSURE | False) != math.Result.UNSURE: return False
+        if (math.Result.UNSURE | True)  != math.Result.TRUE:   return False
+        if (math.Result.TRUE   | False) != math.Result.TRUE:   return False
+        if (math.Result.TRUE   | True)  != math.Result.TRUE:   return False
+        if (False | math.Result.FALSE)  != math.Result.FALSE:  return False
+        if (True  | math.Result.FALSE)  != math.Result.TRUE:   return False
+        if (False | math.Result.UNSURE) != math.Result.UNSURE: return False
+        if (True  | math.Result.UNSURE) != math.Result.TRUE:   return False
+        if (False | math.Result.TRUE)   != math.Result.TRUE:   return False
+        if (True  | math.Result.TRUE)   != math.Result.TRUE:   return False
 
         if math.Result.FALSE.__or__("Dummy")  != NotImplemented: return False
         if math.Result.UNSURE.__or__("Dummy") != NotImplemented: return False
         if math.Result.TRUE.__or__("Dummy")   != NotImplemented: return False
+        if math.Result.FALSE.__ror__("Dummy")  != NotImplemented: return False
+        if math.Result.UNSURE.__ror__("Dummy") != NotImplemented: return False
+        if math.Result.TRUE.__ror__("Dummy")   != NotImplemented: return False
         return True
     def AndOperator() -> bool:
-        """Tests if the __and__ method works as intended"""
+        """Tests if the __and__ and __rand__ methods work as intended"""
         if (math.Result.FALSE  & math.Result.FALSE)  != math.Result.FALSE:  return False
         if (math.Result.FALSE  & math.Result.UNSURE) != math.Result.FALSE:  return False
         if (math.Result.FALSE  & math.Result.TRUE)   != math.Result.FALSE:  return False
@@ -74,10 +89,25 @@ class TestMathResult(Tester):
         if (math.Result.TRUE   & math.Result.FALSE)  != math.Result.FALSE:  return False
         if (math.Result.TRUE   & math.Result.UNSURE) != math.Result.UNSURE: return False
         if (math.Result.TRUE   & math.Result.TRUE)   != math.Result.TRUE:   return False
+        if (math.Result.FALSE  & False) != math.Result.FALSE:  return False
+        if (math.Result.FALSE  & True)  != math.Result.FALSE:  return False
+        if (math.Result.UNSURE & False) != math.Result.FALSE:  return False
+        if (math.Result.UNSURE & True)  != math.Result.UNSURE: return False
+        if (math.Result.TRUE   & False) != math.Result.FALSE:  return False
+        if (math.Result.TRUE   & True)  != math.Result.TRUE:   return False
+        if (False & math.Result.FALSE)  != math.Result.FALSE:  return False
+        if (True  & math.Result.FALSE)  != math.Result.FALSE:  return False
+        if (False & math.Result.UNSURE) != math.Result.FALSE:  return False
+        if (True  & math.Result.UNSURE) != math.Result.UNSURE: return False
+        if (False & math.Result.TRUE)   != math.Result.FALSE:  return False
+        if (True  & math.Result.TRUE)   != math.Result.TRUE:   return False
 
         if math.Result.FALSE.__and__("Dummy")  != NotImplemented: return False
         if math.Result.UNSURE.__and__("Dummy") != NotImplemented: return False
         if math.Result.TRUE.__and__("Dummy")   != NotImplemented: return False
+        if math.Result.FALSE.__rand__("Dummy")  != NotImplemented: return False
+        if math.Result.UNSURE.__rand__("Dummy") != NotImplemented: return False
+        if math.Result.TRUE.__rand__("Dummy")   != NotImplemented: return False
         return True
 
 class TestMathSymbolicInfinity(Tester):
@@ -184,6 +214,5 @@ class TestAllMathTests(Tester):
     """Runs all the Math tests"""
     def Result() -> bool: return TestMathResult(True)
     def SymbolicInfinity() -> bool: return TestMathSymbolicInfinity(True)
-
 
 TestAllMathTests()

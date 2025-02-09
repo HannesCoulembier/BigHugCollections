@@ -2,7 +2,7 @@ from Tools.bhlog import log, Severity
 import Tools.bhconstants as Constants
 
 from math import sqrt
-from enum import IntEnum
+from enum import IntEnum, Enum
 from typing import Union, Iterable, Callable, Iterator, Any, Self
 from numbers import Complex, Real, Rational, Integral
 import inspect
@@ -11,7 +11,7 @@ class SetTypes(IntEnum):
 	Empty=0
 	All=1
 
-class Result(IntEnum):
+class Result(Enum):
     FALSE=0
     TRUE=1
     UNSURE=2
@@ -19,7 +19,7 @@ class Result(IntEnum):
     def __bool__(self):
         if self.value == 0: return False
         elif self.value == 1: return True
-        else: raise TypeError("UNSURE Result cannot be converted to boolean")
+        else: raise NotImplementedError("UNSURE Result cannot be converted to boolean")
     def __str__(self) -> str:
         return str(self.name) 
     def __repr__(self) -> str:
@@ -27,16 +27,22 @@ class Result(IntEnum):
     def __eq__(self, y:Any) -> bool:
         if type(y) != Result: return NotImplemented
         return self.value == y.value
-    def __or__(self, y:Any)->Self:
+    def __or__(self, y:Any) -> Self:
+        if type(y) == bool: return self | (Result.TRUE if y else Result.FALSE)
         if type(y) != Result: return NotImplemented
-        if self.value == Result.TRUE or y.value == Result.TRUE: return Result.TRUE
-        if self.value == Result.UNSURE or y.value == Result.UNSURE: return Result.UNSURE
+        if (self == Result.TRUE) or (y == Result.TRUE): return Result.TRUE
+        if (self == Result.UNSURE) or (y == Result.UNSURE): return Result.UNSURE
         return Result.FALSE
-    def __and__(self, y:Any)->Self:
+    def __ror__(self, y:Any) -> Self:
+        return self.__or__(y)
+    def __and__(self, y:Any) -> Self:
+        if type(y) == bool: return self & (Result.TRUE if y else Result.FALSE)
         if type(y) != Result: return NotImplemented
-        if self.value == Result.FALSE or y.value == Result.FALSE: return Result.FALSE
-        if self.value == Result.UNSURE or y.value == Result.UNSURE: return Result.UNSURE
+        if (self == Result.FALSE) or (y == Result.FALSE): return Result.FALSE
+        if (self == Result.UNSURE) or (y == Result.UNSURE): return Result.UNSURE
         return Result.TRUE
+    def __rand__(self, y:Any) -> Self:
+        return self.__and__(y)
 
 class SuccessorIterator(Iterator):
     """Iterator that only counts up and never stops. Can create infinite loops, so be careful"""
