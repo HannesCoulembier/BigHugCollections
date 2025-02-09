@@ -1,5 +1,5 @@
-import Tools.color as color
-import Tools.io as io
+import Python.Tools.bhcolor as color
+import Python.Tools.bhio as io
 import Tools.bhmath as math
 
 

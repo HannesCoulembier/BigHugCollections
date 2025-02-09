@@ -1,5 +1,5 @@
-from Tools.log import log, Severity
-import Tools.constants as Constants
+from Python.Tools.bhlog import log, Severity
+import Python.Tools.bhconstants as Constants
 
 from math import sqrt
 from enum import IntEnum

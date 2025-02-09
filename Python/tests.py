@@ -1,4 +1,4 @@
-from Tools.tester import Tester
+from Python.Tools.bhtester import Tester
 
 import Tools.bhmath as math
 
