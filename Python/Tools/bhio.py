@@ -1,4 +1,4 @@
-import Python.Tools.bhlog as log
+import Tools.bhlog as log
 
 import os
 from typing import Union

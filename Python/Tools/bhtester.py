@@ -1,4 +1,4 @@
-from Python.Tools.bhlog import log, Severity
+from Tools.bhlog import log, Severity
 
 import inspect
 
