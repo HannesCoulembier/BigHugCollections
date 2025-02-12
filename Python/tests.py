@@ -42,6 +42,19 @@ class TestMathResult(Tester):
         if (math.Result.TRUE   == math.Result.FALSE)  != False: return False
         if (math.Result.TRUE   == math.Result.UNSURE) != False: return False
         if (math.Result.TRUE   == math.Result.TRUE)   != True:  return False
+
+        if (math.Result.FALSE == False)  != True:  return False
+        if (math.Result.FALSE == True)   != False: return False
+        if (math.Result.UNSURE == False) != False: return False
+        if (math.Result.UNSURE == True)  != False: return False
+        if (math.Result.TRUE  == False)  != False: return False
+        if (math.Result.TRUE  == True)   != True:  return False
+        if (False == math.Result.FALSE)  != True:  return False
+        if (True  == math.Result.FALSE)  != False: return False
+        if (False == math.Result.UNSURE) != False: return False
+        if (True  == math.Result.UNSURE) != False: return False
+        if (False == math.Result.TRUE)   != False: return False
+        if (True  == math.Result.TRUE)   != True:  return False
         
         if math.Result.FALSE.__eq__("Dummy")  != NotImplemented: return False
         if math.Result.UNSURE.__eq__("Dummy") != NotImplemented: return False
@@ -188,7 +201,7 @@ class TestMathSymbolicInfinity(Tester):
         if (P <  28.71) != False: return False
         if (N <= 28.71) != True:  return False
         if (P <= 28.71) != False: return False
-        
+
         if N.__gt__("Dummy") != NotImplemented: return False
         if P.__gt__("Dummy") != NotImplemented: return False
         if N.__ge__("Dummy") != NotImplemented: return False

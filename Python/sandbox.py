@@ -3,20 +3,20 @@ import Tools.bhio as io
 import Tools.bhmath as math
 import Tools.bhhelper as helper
 
-for j in helper.JoinedIterator([(i/1000 for i in range(4)),(i for i in math.SuccessorIterator())]):
+for j in helper.JoinedIterator([(i/1000 for i in range(4)),(i for i in helper.SuccessorIterator())]):
     print(j)
     if j>10: break
 
-empty = math.Set(math.SetTypes.Empty)
+empty = math.Set(math.Set.Empty)
 
 oneTwo = math.Set({1,2})
 condOneTwo = math.Set({1,2}, [lambda x: x%2==0])
 
-all = math.Set(math.SetTypes.All)
-allCond = math.Set(math.SetTypes.All, [lambda x: x%2==0])
+all = math.Set(math.Set.Descriptive)
+allCond = math.Set(math.Set.Descriptive, [lambda x: x%2==0])
 
-finGen = math.Set(range(10))
-finGenCond = math.Set(range(10), [lambda x: x%2==0])
+finGen = math.Set(list(range(10)))
+finGenCond = math.Set(list(range(10)), [lambda x: x%2==0])
 
 print(condOneTwo.isSubSetOf(oneTwo))
 

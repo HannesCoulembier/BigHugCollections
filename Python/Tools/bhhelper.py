@@ -1,6 +1,17 @@
 
 from typing import Iterator, Self, Any
 
+class SuccessorIterator(Iterator):
+    """Iterator that only counts up and never stops. Can create infinite loops, so be careful"""
+    def __init__(self):
+        self.count = 0
+    def __iter__(self) -> Self:
+        return self
+    def __next__(self) -> int:
+        count = self.count
+        self.count += 1
+        return count
+
 class JoinedIterator(Iterator):
     """Iterator that alternates between its children until they are depleted"""
     def __init__(self, children:list[Iterator]):
