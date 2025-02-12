@@ -1,6 +1,7 @@
 from Tools.bhlog import log, Severity
 
 import inspect
+from collections import OrderedDict
 
 class TestResult:
     def __init__(self, succeeded, testCount):
@@ -10,13 +11,20 @@ class TestResult:
 class Tester:
     """An instance of a child of this class can be called. When called, it will execute all methods associated with the child that take no parameters and don't start with a '_'"""
     def __new__(cls, silent=False) -> TestResult:
-        testNames = [method for method in cls.__dict__ if callable(getattr(cls, method)) and not method.startswith("_") and len(inspect.signature(getattr(cls, method)).parameters) == 0]
+        sig1 = OrderedDict([])
+        sig2 = OrderedDict([('silent', inspect.Parameter("silent",inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False))])
+        testNames = [method for method in cls.__dict__ if callable(getattr(cls, method)) and not method.startswith("_") and (inspect.signature(getattr(cls, method)).parameters == sig1 or inspect.signature(getattr(cls, method)).parameters == sig2)]
+
         succeeded = 0
         testCount = 0
         for testName in testNames:
             if not silent: log(f"Testing: '{testName}'", Severity.info)
+            method = getattr(cls, testName)
             try:
-                res = getattr(cls, testName)()
+                if inspect.signature(method).parameters == sig1:
+                    res = method()
+                else:
+                    res = method(silent=True)
             except:
                 if not silent: log(f"Crashed", Severity.warn)
                 testCount += 1

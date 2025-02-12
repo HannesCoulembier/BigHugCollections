@@ -226,12 +226,132 @@ class TestMathSymbolicInfinity(Tester):
         if P.__le__(1.2+0.3j) != NotImplemented: return FAILED
         return PASSED
 
+class TestMathSet(Tester):
+    """Tests if the Set class works as intended"""
+    class Constructor(Tester):
+        """Tests if the __init__ method works as intended"""
+        def InputChecks() -> TestResult:
+            """Tests if all input is correctly (type) checked"""
+            # TODO
+            return PASSED
+        def Empty() -> TestResult:
+            """Tests the empty set constructor"""
+            empty1 = math.Set(math.Set.Empty)
+            empty2 = math.Set(math.Set.Empty, [lambda x: False])
+
+            if empty1.conditions                                        != []:                      return FAILED
+            if empty1.sureset                                           != set():                   return FAILED
+            if empty1.unsureset                                         != set():                   return FAILED
+            if empty1.parents                                           != set():                   return FAILED
+            if empty1.allParents                                        != set():                   return FAILED
+            if empty1.type                                              != math.Set.Type.Finite:    return FAILED
+            if empty1.unions                                            != []:                      return FAILED
+            
+            if empty2.conditions                                        != []:                      return FAILED
+            if empty2.sureset                                           != set():                   return FAILED
+            if empty2.unsureset                                         != set():                   return FAILED
+            if empty2.parents                                           != set():                   return FAILED
+            if empty2.allParents                                        != set():                   return FAILED
+            if empty2.type                                              != math.Set.Type.Finite:    return FAILED
+            if empty2.unions                                            != []:                      return FAILED
+
+            return PASSED
+        def Descriptive() -> TestResult:
+            """Tests Descriptive Sets constructors"""
+            desc1 = math.Set(math.Set.Descriptive)
+            desc2 = math.Set(math.Set.Descriptive, [lambda x: math.Result.UNSURE])
+            desc3 = math.Set(math.Set.Descriptive, parents={math.Sets.R})
+            desc4 = math.Set(math.Set.Descriptive, [lambda x: math.Result.UNSURE], parents={math.Sets.R})
+
+            if len(desc1.conditions)    != 1:                           return FAILED
+            if     desc1.sureset        != set():                       return FAILED
+            if     desc1.unsureset      != set():                       return FAILED
+            if     desc1.parents        != set():                       return FAILED
+            if     desc1.allParents     != set():                       return FAILED
+            if     desc1.type           != math.Set.Type.Descriptive:   return FAILED
+            if     desc1.unions         != []:                          return FAILED
+            
+            if len(desc2.conditions)    != 1:                           return FAILED
+            if     desc2.sureset        != set():                       return FAILED
+            if     desc2.unsureset      != set():                       return FAILED
+            if     desc2.parents        != set():                       return FAILED
+            if     desc2.allParents     != set():                       return FAILED
+            if     desc2.type           != math.Set.Type.Descriptive:   return FAILED
+            if     desc2.unions         != []:                          return FAILED
+            
+            if len(desc3.conditions)    != 2:                           return FAILED
+            if     desc3.sureset        != set():                       return FAILED
+            if     desc3.unsureset      != set():                       return FAILED
+            if     desc3.parents        != {math.Sets.R}:               return FAILED
+            if     desc3.allParents     != {math.Sets.R, math.Sets.C}:  return FAILED
+            if     desc3.type           != math.Set.Type.Descriptive:   return FAILED
+            if     desc3.unions         != []:                          return FAILED
+            
+            if len(desc4.conditions)    != 2:                           return FAILED
+            if     desc4.sureset        != set():                       return FAILED
+            if     desc4.unsureset      != set():                       return FAILED
+            if     desc4.parents        != {math.Sets.R}:               return FAILED
+            if     desc4.allParents     != {math.Sets.R, math.Sets.C}:  return FAILED
+            if     desc4.type           != math.Set.Type.Descriptive:   return FAILED
+            if     desc4.unions         != []:                          return FAILED
+
+            return PASSED
+        # TODO: test list and set constructors
+        # TODO: test Set constructors
+    # TODO: test _meetsConditions function
+    # TODO: test contains function
+    # TODO: test isSubSetOf function
+    # TODO: test __repr__ function
+    def StringRepresentation() -> TestResult:
+        """Tests if the __str__ and __repr__ methods work as intended"""
+
+        E1r = math.Set(math.Set.Empty).__repr__()
+        D1r = math.Set(math.Set.Descriptive).__repr__()
+        D2r = math.Set(math.Set.Descriptive).__repr__()
+        #TODO: add more tests
+        # TODO: make __repr__ and __str__ Tester (using a dict?)
+        E1s = math.Set(math.Set.Empty).__str__()
+
+        if [E1r, D1r, D2r, E1s] != ["{}", "Descriptive Set", "Descriptive Set", "{}"]: return FAILED
+        return PASSED
+    # TODO: split this Empty test over the member function tests when they are written
+    def Empty() -> TestResult:
+        """Tests the empty set"""
+        empty1 = math.Set(math.Set.Empty)
+        empty2 = math.Set(math.Set.Empty, [lambda x: False])
+
+        if empty1.contains(1)                                       != math.Result.FALSE:       return FAILED
+        if empty1.contains(empty1)                                  != math.Result.FALSE:       return FAILED
+        if empty1.contains(empty2)                                  != math.Result.FALSE:       return FAILED
+        if empty1.contains(math.Set)                                != math.Result.FALSE:       return FAILED
+        if empty1.contains(None)                                    != math.Result.FALSE:       return FAILED
+        if empty1.isSubSetOf(1)                                     != math.Result.FALSE:       return FAILED
+        if empty1.isSubSetOf(empty1)                                != math.Result.TRUE:        return FAILED
+        if empty1.isSubSetOf(empty2)                                != math.Result.TRUE:        return FAILED
+        if empty1.isSubSetOf(math.Set(math.Set.Descriptive))        != math.Result.TRUE:        return FAILED
+        if empty1.isSubSetOf(math.Set({1,2}))                       != math.Result.TRUE:        return FAILED
+        
+        if empty2.contains(1)                                       != math.Result.FALSE:       return FAILED
+        if empty2.contains(empty1)                                  != math.Result.FALSE:       return FAILED
+        if empty2.contains(empty2)                                  != math.Result.FALSE:       return FAILED
+        if empty2.contains(math.Set)                                != math.Result.FALSE:       return FAILED
+        if empty2.contains(None)                                    != math.Result.FALSE:       return FAILED
+        if empty2.isSubSetOf(1)                                     != math.Result.FALSE:       return FAILED
+        if empty2.isSubSetOf(empty1)                                != math.Result.TRUE:        return FAILED
+        if empty2.isSubSetOf(empty2)                                != math.Result.TRUE:        return FAILED
+        if empty2.isSubSetOf(math.Set(math.Set.Descriptive))        != math.Result.TRUE:        return FAILED
+        if empty2.isSubSetOf(math.Set({1,2}))                       != math.Result.TRUE:        return FAILED
+
+        return PASSED
+
+
 
 # ----- Grouped tests -----------------------------------------------------------------------------
 class TestAllMathTests(Tester):
     """Runs all the Math tests"""
-    def Result() -> TestResult: return TestMathResult(True)
-    def SymbolicInfinity() -> TestResult: return TestMathSymbolicInfinity(True)
+    def Result() -> TestResult: return TestMathResult(silent=True)
+    def SymbolicInfinity() -> TestResult: return TestMathSymbolicInfinity(silent=True)
+    def Set() -> TestResult: return TestMathSet(silent=True)
 
-# TestMathResult()
-TestAllMathTests()
+TestMathSet()
+# TestAllMathTests()

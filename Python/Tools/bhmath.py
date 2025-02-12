@@ -59,17 +59,13 @@ class Set:
         self.unsureset = unsureset
         self.unions = unions
 
-        self.conditions = conditions
+        self.conditions = conditions + [lambda x: parent.contains(x) for parent in parents]
 
         self.parents = parents
         self.allParents = set(list(self.parents)+sum([list(parent.allParents) for parent in self.parents],[])) # A set of all parent Sets (usefull to determine if this Set "A" is a subset of another Set "B": If "B" is one of its parents, "A" is a subset)
         
     def _meetsConditions(self, x:Any) -> Result:
         allTrue = True
-        for parent in self.parents:
-            r = parent.contains(x)
-            if r == Result.FALSE: return Result.FALSE
-            if r == Result.UNSURE: allTrue = False
         for cond in self.conditions:
             try:
                 r = cond(x)
@@ -80,7 +76,7 @@ class Set:
         if allTrue: return Result.TRUE
         return Result.UNSURE
 
-    def __init__(self, base:Union[_DescriptiveTypeIndicator, Self, set, list], conditions:list[Callable[[Any],Result]]=[lambda x:Result.TRUE], parents:set=set()):
+    def __init__(self, base:Union[_DescriptiveTypeIndicator, _EmptyIndicator, Self, set, list], conditions:list[Callable[[Any],Result]]=[lambda x:Result.TRUE], parents:set=set()):
 
         if type(conditions) != list: raise TypeError("conditions should be a list")
         if set([isinstance(condition, Callable) for condition in conditions]) != {True}: raise TypeError("all conditions should be instances of Callable")
@@ -124,7 +120,7 @@ class Set:
             else:
                 raise ValueError("Unknown Set.Type")
         else:
-            raise TypeError("Unknown base type. Base should be Set.Descriptive, a Set, a set or list or an Iterable instance")
+            raise TypeError("Unknown base type. Base should be Set.Descriptive, Set.Empty, a Set, a set or list, or an Iterable instance")
 
     def contains(self, x:Any) -> Result:
 
@@ -151,6 +147,7 @@ class Set:
         
     def isSubSetOf(self, x:Any) -> Result:
         if type(x) != Set: return Result.FALSE
+        if self is x: return Result.TRUE
         if x in self.allParents: return Result.TRUE
 
         if self.type == Set.Type.Finite:
@@ -178,9 +175,9 @@ class Set:
             return "Descriptive Set"
         if self.type == Set.Type.Finite:
             if self.unsureset == set():
-                return f"{self.sureset}"
+                return f"{self.sureset}" if self.sureset != set() else "{}"
             else:
-                return f"{self.sureset} and possibly {self.unsureset}"
+                return f"{self.sureset} and possibly {self.unsureset}" if self.sureset != set() else f"possibly {self.unsureset}"
         if self.type == Set.Type.Union:
             ustr = ', '.join([union.__repr__() for union in self.unions])
             return f"The union of {ustr}"
