@@ -1,9 +1,6 @@
-from Tools.bhtester import Tester, TestResult
+from Tools.bhtester import Tester, ReprTester, TestResult, PASSED, FAILED, TestBHTester
 
 import Tools.bhmath as math
-
-PASSED = TestResult(1, 1)
-FAILED = TestResult(0, 1)
 
 # ----- All individual tests ----------------------------------------------------------------------
 class TestMathResult(Tester):
@@ -301,19 +298,14 @@ class TestMathSet(Tester):
     # TODO: test _meetsConditions function
     # TODO: test contains function
     # TODO: test isSubSetOf function
-    # TODO: test __repr__ function
-    def StringRepresentation() -> TestResult:
-        """Tests if the __str__ and __repr__ methods work as intended"""
-
-        E1r = math.Set(math.Set.Empty).__repr__()
-        D1r = math.Set(math.Set.Descriptive).__repr__()
-        D2r = math.Set(math.Set.Descriptive).__repr__()
-        #TODO: add more tests
-        # TODO: make __repr__ and __str__ Tester (using a dict?)
-        E1s = math.Set(math.Set.Empty).__str__()
-
-        if [E1r, D1r, D2r, E1s] != ["{}", "Descriptive Set", "Descriptive Set", "{}"]: return FAILED
-        return PASSED
+    StringRepresentation = ReprTester([
+        (math.Set(math.Set.Empty),          "{}"                ),
+        (math.Set(math.Set.Descriptive),    "Descriptive Set"   ),
+        (math.Set({1, 2, 3}),               "{1, 2, 3}"         ),
+        (math.Set(set()),                   "{}"                ),
+        # TODO: add some union naming tests
+        # TODO: add some unsure set naming tests
+    ])
     # TODO: split this Empty test over the member function tests when they are written
     def Empty() -> TestResult:
         """Tests the empty set"""
@@ -353,5 +345,7 @@ class TestAllMathTests(Tester):
     def SymbolicInfinity() -> TestResult: return TestMathSymbolicInfinity(silent=True)
     def Set() -> TestResult: return TestMathSet(silent=True)
 
-TestMathSet()
+
+# TestMathSet()
+TestBHTester()
 # TestAllMathTests()
