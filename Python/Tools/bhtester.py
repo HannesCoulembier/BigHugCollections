@@ -1,4 +1,5 @@
-from Tools.bhlog import log, Severity
+if __name__ == "__main__":  from       bhlog import log, Severity
+else:                       from Tools.bhlog import log, Severity
 
 import inspect
 from typing import Any
@@ -15,6 +16,9 @@ class TestResult:
         if self.testCount != 0:
             percent = round(100*self.succeeded/self.testCount, 2)
         return f"{self.succeeded} out of {self.testCount} tests succeeded ({percent}%)"
+    def __eq__(self, x:Any) -> bool:
+        if type(x) != TestResult: return NotImplemented
+        return self.succeeded == x.succeeded and self.testCount == x.testCount
 
 PASSED = TestResult(1, 1)
 FAILED = TestResult(0, 1)
@@ -41,7 +45,8 @@ class Tester:
                 continue
 
             if type(res) != TestResult:
-                log(f"Wrongly defined test: test '{testName}' did not return a TestResult. Instead got type {type(res)}", Severity.error)
+                if not silent: log(f"Wrongly defined test: test '{testName}' did not return a TestResult. Instead got type {type(res)}", Severity.error)
+                result.testCount += 1
                 continue
             result.succeeded += res.succeeded
             result.testCount += res.testCount
@@ -54,19 +59,24 @@ class ReprTester:
     """Tests if the __str__ and __repr__ methods work as intended for every pair in a list"""
     def __init__(self, pairs:list[tuple[Any, str]]):
         if type(pairs) != list: raise TypeError("Pairs must be a list of pairs")
-        if set(type(pair) for pair in pairs) != {tuple}: raise TypeError("Every pair in pairs must be a tuple")
-        if set(len(pair) for pair in pairs) != {2}: raise TypeError("Every pair in pairs must be a tuple with exactly 2 items")
+        if len(pairs) != 0:
+            if set(type(pair) for pair in pairs) != {tuple}: raise TypeError("Every pair in pairs must be a tuple")
+            if set(len(pair) for pair in pairs) != {2}: raise ValueError("Every pair in pairs must be a tuple with exactly 2 items")
         self.pairs = pairs
 
-    def __call__(self, silent:bool=False) -> TestResult:
+    def __call__(self) -> TestResult:
         """Tests if the __str__ and __repr__ methods work as intended for every pair in the list"""
         succeeded = 0
         for pair in self.pairs:
-            if pair[0].__repr__() == pair[1] and pair[0].__str__() == pair[1]: succeeded += 1
+            try:
+                if pair[0].__repr__() == pair[1] and pair[0].__str__() == pair[1]: succeeded += 1
+            except:
+                continue
         return TestResult(succeeded=succeeded, testCount=len(self.pairs))
     
 
 class TestBHTester(Tester):
+    """Tests all bhtester related objects"""
     class TestTestResult(Tester):
         """Tests if the TestResult class works as intended"""
         def Construct() -> TestResult:
@@ -83,6 +93,19 @@ class TestBHTester(Tester):
                 return FAILED
             except(TypeError): pass
             return PASSED        
+        def EqualityOperator() -> TestResult:
+            if TestResult(0, 0) != TestResult(0, 0): return FAILED
+            if TestResult(1, 0) != TestResult(1, 0): return FAILED
+            if TestResult(0, 1) != TestResult(0, 1): return FAILED
+            if TestResult(1, 1) != TestResult(1, 1): return FAILED
+            if TestResult(0, 2) == TestResult(0, 0): return FAILED
+            if TestResult(2, 0) == TestResult(0, 0): return FAILED
+            if TestResult(2, 2) == TestResult(0, 0): return FAILED
+            
+            if TestResult(2, 1).__eq__("dummy") != NotImplemented: return FAILED
+            if TestResult(2, 1).__eq__(True)    != NotImplemented: return FAILED
+
+            return PASSED
         StringRepresentation = ReprTester([
             (TestResult(0, 0), "0 out of 0 tests succeeded (100.0%)"),
             (TestResult(1, 0), "1 out of 0 tests succeeded (100.0%)"),
@@ -93,6 +116,139 @@ class TestBHTester(Tester):
             (TestResult(2, 3), "2 out of 3 tests succeeded (66.67%)"),
         ])
     class TestTester(Tester):
-        pass # TODO
+        """Tests if the Tester class works as intended
+
+        Important! This Tester does not test the logging capabilities to prevent clutter, this means all Tester instances are called using silent=True
+        """
+        def BaseClass() -> TestResult:
+            """Tests if the base class works as intended"""
+            if Tester(silent=True) != TestResult(0, 0): return FAILED # Tester should have no tests of its own, because they would be inherited by the children
+            return PASSED
+        def MethodDetection() -> TestResult:
+            """Tests if the test methods of a child are correctly detected"""
+            class Child1(Tester):
+                def m1() -> TestResult: return PASSED
+                def m2() -> TestResult: return PASSED
+            class Child2(Tester):
+                def _m1() -> TestResult: return PASSED
+                def m2() -> TestResult: return PASSED
+            class Child3(Tester):
+                m1 = PASSED
+                def m2() -> TestResult: return PASSED
+            class Child4(Tester):
+                def m1(incorrect_argument_name) -> TestResult: return PASSED
+                def m2() -> TestResult: return PASSED
+            class Child4(Tester):
+                def m1(silent) -> TestResult: return PASSED # Has no default value nor type annotation
+                def m2() -> TestResult: return PASSED
+            class Child5(Tester):
+                def m1(silent=False) -> TestResult: return PASSED # Has no type annotation
+                def m2() -> TestResult: return PASSED
+            class Child6(Tester):
+                def m1(silent:bool) -> TestResult: return PASSED # Has no default value
+                def m2() -> TestResult: return PASSED
+            class Child7(Tester):
+                def m1(silent:bool = True) -> TestResult: return PASSED # Has incorrect default value
+                def m2() -> TestResult: return PASSED
+
+            # Some special cases
+            class Child8(Tester):
+                class Baby(Tester):
+                    def m() -> TestResult: return PASSED
+            class Child9(Tester):
+                StringBaby = ReprTester([
+                    (True, "True")
+                ])
+            
+            if Child1(silent=True) != TestResult(2, 2): return FAILED
+            if Child2(silent=True) != TestResult(1, 1): return FAILED
+            if Child3(silent=True) != TestResult(1, 1): return FAILED
+            if Child4(silent=True) != TestResult(1, 1): return FAILED
+            if Child5(silent=True) != TestResult(1, 1): return FAILED
+            if Child6(silent=True) != TestResult(1, 1): return FAILED
+            if Child7(silent=True) != TestResult(1, 1): return FAILED
+
+            if Child8(silent=True) != TestResult(1, 1): return FAILED
+            if Child9(silent=True) != TestResult(1, 1): return FAILED
+
+            return PASSED
+        def CrashHandling() -> TestResult:
+            """Tests if crashes are handled correctly"""
+            class Child1(Tester):
+                def crash() -> TestResult: raise Exception
+            class Child2(Tester):
+                def crash() -> TestResult: raise Exception("Error message")
+            class Child3(Tester):
+                def crash() -> TestResult: raise BaseException
+            class Child4(Tester):
+                def crash() -> TestResult: raise BaseException("Error message")
+            class Child5(Tester):
+                def crash1() -> TestResult: raise Exception
+                def crash2() -> TestResult: raise Exception
+
+            if Child1(silent=True) != TestResult(0, 1): return FAILED
+            if Child2(silent=True) != TestResult(0, 1): return FAILED
+            if Child3(silent=True) != TestResult(0, 1): return FAILED
+            if Child4(silent=True) != TestResult(0, 1): return FAILED
+            if Child5(silent=True) != TestResult(0, 2): return FAILED
+
+            return PASSED
+        def MethodEvaluation() -> TestResult:
+            """Tests if the result of a test method is processed correctly"""
+            class Child1(Tester):
+                def m() -> TestResult: return TestResult(0, 0)
+            class Child2(Tester):
+                def m() -> TestResult: return TestResult(1, 2)
+            class Child3(Tester):
+                def m() -> TestResult: return "dummy"
+            class Child4(Tester):
+                def m1() -> TestResult: return TestResult(1, 2)
+                def m2() -> TestResult: return "dummy"
+                def m3() -> TestResult: return TestResult(1, 2)
+                def m4() -> TestResult: return TestResult(0, 0)
+
+            if Child1(silent=True) != TestResult(0, 0): return FAILED
+            if Child2(silent=True) != TestResult(1, 2): return FAILED
+            if Child3(silent=True) != TestResult(0, 1): return FAILED
+            if Child4(silent=True) != TestResult(2, 5): return FAILED
+
+            return PASSED
     class TestReprTester(Tester):
-        pass # TODO
+        """Tests if the ReprTester class works as intended"""
+        def Constructor() -> TestResult:
+            """Tests if the __init__ method works as intended"""
+            if ReprTester([]).pairs                 != []:                  return FAILED
+            if ReprTester([(1, 2), (3, 4)]).pairs   != [(1, 2), (3, 4)]:    return FAILED
+
+            try:
+                ReprTester("dummy")
+                return FAILED
+            except(TypeError): pass
+            try:
+                ReprTester(["dummy", (3, 4)])
+                return FAILED
+            except(TypeError): pass
+            try:
+                ReprTester([(1,), (2, 3)])
+                return FAILED
+            except(ValueError): pass
+            
+            return PASSED
+        def Execution() -> TestResult:
+            """Tests if the class works correctly"""
+            if ReprTester([])()                                 != TestResult(0, 0): return FAILED
+            if ReprTester([(True, "True")])()                   != TestResult(1, 1): return FAILED
+            if ReprTester([(True, "True"), (False, "False")])() != TestResult(2, 2): return FAILED
+            if ReprTester([(True, True)])()                     != TestResult(0, 1): return FAILED
+            if ReprTester([(True, True), (False, "False")])()   != TestResult(1, 2): return FAILED
+
+            class WhyWouldThisExist:
+                def __repr__(self) -> str:
+                    raise Exception
+            
+            if ReprTester([(WhyWouldThisExist(), "dummy")])()   != TestResult(0, 1): return FAILED
+
+            return PASSED
+
+if __name__ == "__main__":
+    TestBHTester()

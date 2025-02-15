@@ -341,11 +341,17 @@ class TestMathSet(Tester):
 # ----- Grouped tests -----------------------------------------------------------------------------
 class TestAllMathTests(Tester):
     """Runs all the Math tests"""
-    def Result() -> TestResult: return TestMathResult(silent=True)
-    def SymbolicInfinity() -> TestResult: return TestMathSymbolicInfinity(silent=True)
-    def Set() -> TestResult: return TestMathSet(silent=True)
+    Result = TestMathResult
+    SymbolicInfinity = TestMathSymbolicInfinity
+    Set = TestMathSet
 
+# ----- EVERYTHING --------------------------------------------------------------------------------
+class TestEVERYTHING(Tester):
+    """Runs ALL tests"""
+    BHTester = TestBHTester
+    MathTests = TestAllMathTests
 
 # TestMathSet()
-TestBHTester()
+# TestBHTester()
+TestEVERYTHING()
 # TestAllMathTests()
