@@ -59,7 +59,9 @@ class Set:
         self.unsureset = unsureset
         self.unions = unions
 
-        self.conditions = conditions + [lambda x: parent.contains(x) for parent in parents]
+        if self.type != Set.Type.Finite:
+            self.conditions = conditions + [lambda x: parent.contains(x) for parent in parents]
+        else: self.conditions = []
 
         self.parents = parents
         self.allParents = set(list(self.parents)+sum([list(parent.allParents) for parent in self.parents],[])) # A set of all parent Sets (usefull to determine if this Set "A" is a subset of another Set "B": If "B" is one of its parents, "A" is a subset)
@@ -79,10 +81,9 @@ class Set:
     def __init__(self, base:Union[_DescriptiveTypeIndicator, _EmptyIndicator, Self, set, list], conditions:list[Callable[[Any],Result]]=[lambda x:Result.TRUE], parents:set=set()):
 
         if type(conditions) != list: raise TypeError("conditions should be a list")
-        if set([isinstance(condition, Callable) for condition in conditions]) != {True}: raise TypeError("all conditions should be instances of Callable")
+        if len(conditions) != 0 and set([isinstance(condition, Callable) for condition in conditions]) != {True}: raise TypeError("all conditions should be instances of Callable")
         if type(parents) != set: raise TypeError("parents should be a set")
-        if parents != set():
-            if set([type(parent) for parent in parents]) != {Set}: raise TypeError("All parents should be of type Set")
+        if len(parents) != 0 and set([type(parent) for parent in parents]) != {Set}: raise TypeError("All parents should be of type Set")
 
         if type(base) == Set._DescriptiveTypeIndicator:
             self._private_init_(Set.Type.Descriptive, set(), set(), [], conditions, parents)
@@ -101,7 +102,7 @@ class Set:
             parents = parents.copy()
             parents.add(base)
             if base.type == Set.Type.Descriptive:
-                self._private_init_(Set.Type.Descriptive, set(), set(), [], base.conditions+conditions, parents)
+                self._private_init_(Set.Type.Descriptive, set(), set(), [], conditions, parents)
             elif base.type == Set.Type.Finite:
                 sureset = set()
                 unsureset = set()
@@ -116,7 +117,7 @@ class Set:
                     unsureset.add(item)
                 self._private_init_(Set.Type.Finite, sureset, unsureset, [], [], parents)
             elif base.type == Set.Type.Union:
-                self._private_init_(Set.Type.Union, set(), set(), base.unions, base.conditions+conditions, parents)
+                self._private_init_(Set.Type.Union, set(), set(), base.unions, conditions, parents)
             else:
                 raise ValueError("Unknown Set.Type")
         else:
