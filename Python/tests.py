@@ -19,19 +19,11 @@ class TestMathResult(Tester):
         except NotImplementedError:
             return PASSED
         return FAILED # This will run when either the conversion in the try block succeeded or the wrong exception was thrown
-    def StringRepresentation() -> TestResult:
-        """Tests if the __str__ and __repr__ methods work as intended"""
-
-        Tr = math.Result.TRUE.__repr__()
-        Ur = math.Result.UNSURE.__repr__()
-        Fr = math.Result.FALSE.__repr__()
-
-        Ts = math.Result.TRUE.__str__()
-        Us = math.Result.UNSURE.__str__()
-        Fs = math.Result.FALSE.__str__()
-
-        if [Tr, Ur, Fr, Ts, Us, Fs] != ["TRUE", "UNSURE", "FALSE", "TRUE", "UNSURE", "FALSE"]: return FAILED
-        return PASSED
+    StringRepresentation = ReprTester([
+        (math.Result.TRUE,      "TRUE"),
+        (math.Result.UNSURE,    "UNSURE"),
+        (math.Result.FALSE,     "FALSE"),
+    ])
     def EqualityOperator() -> TestResult:
         """Tests if the __eq__ method works as intended"""
         if (math.Result.FALSE  == math.Result.FALSE)  != True:  return FAILED
@@ -140,17 +132,10 @@ class TestMathSymbolicInfinity(Tester):
             return FAILED
         except:
             return PASSED
-    def StringRepresentation() -> TestResult:
-        """Tests if the __str__ and __repr__ methods work as intended"""
-
-        Pr = math.SymbolicInfinity(True).__repr__()
-        Nr = math.SymbolicInfinity(False).__repr__()
-
-        Ps = math.SymbolicInfinity(True).__str__()
-        Ns = math.SymbolicInfinity(False).__str__()
-
-        if [Pr, Nr, Ps, Ns] != ["\u221e", "-\u221e", "\u221e", "-\u221e"]: return FAILED
-        return PASSED
+    StringRepresentation = ReprTester([
+        (math.SymbolicInfinity(True), "\u221e"),
+        (math.SymbolicInfinity(False), "-\u221e"),
+    ])
     def EqualityOperator() -> TestResult:
         """Tests if the __eq__ method works as intended"""
         if (math.SymbolicInfinity(False) == math.SymbolicInfinity(False)) != True:  return FAILED
