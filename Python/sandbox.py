@@ -57,6 +57,7 @@ print(f1(2))
 
 int1 = math.Interval(2,2,True,True)
 print(int1)
+print(oneTwo|condOneTwo)
 
 # v = math.Vec2(3+9j,4)
 # print(repr(v))

@@ -431,6 +431,7 @@ class TestMathSet(Tester):
             empty = math.Set(math.Set.Empty)
             desc = math.Set(math.Set.Descriptive)
             descCond = math.Set(math.Set.Descriptive, [lambda x: math.Result.UNSURE])
+            union = descCond | finSure
 
             s1 = math.Set(finSure)
             s2 = math.Set(finUnsure)
@@ -441,71 +442,86 @@ class TestMathSet(Tester):
             s7 = math.Set(descCond)
             s8 = math.Set(descCond, [lambda x: math.Result.UNSURE])
             s9 = math.Set(descCond, [lambda x: math.Result.UNSURE, lambda x: math.Result.FALSE])
+            s10 = math.Set(union)
+            s11 = math.Set(union, [lambda x: math.Result.UNSURE], {math.Sets.R})
 
-            if len(s1.conditions)    != 0:                          return FAILED
-            if     s1.sureset        != {1, 2, 3}:                  return FAILED
-            if     s1.unsureset      != set():                      return FAILED
-            if     s1.parents        != {finSure}:                  return FAILED
-            if     s1.allParents     != {finSure}:                  return FAILED
-            if     s1.type           != math.Set.Type.Finite:       return FAILED
-            if     s1.unions         != []:                         return FAILED
-            if len(s2.conditions)    != 0:                          return FAILED
-            if     s2.sureset        != set():                      return FAILED
-            if     s2.unsureset      != {1, 2, 3}:                  return FAILED
-            if     s2.parents        != {finUnsure}:                return FAILED
-            if     s2.allParents     != {finUnsure}:                return FAILED
-            if     s2.type           != math.Set.Type.Finite:       return FAILED
-            if     s2.unions         != []:                         return FAILED
-            if len(s3.conditions)    != 0:                          return FAILED
-            if     s3.sureset        != set():                      return FAILED
-            if     s3.unsureset      != set():                      return FAILED
-            if     s3.parents        != {empty}:                    return FAILED
-            if     s3.allParents     != {empty}:                    return FAILED
-            if     s3.type           != math.Set.Type.Finite:       return FAILED
-            if     s3.unions         != []:                         return FAILED
-            if len(s4.conditions)    != 0:                          return FAILED
-            if     s4.sureset        != set():                      return FAILED
-            if     s4.unsureset      != set():                      return FAILED
-            if     s4.parents        != {finUnsure}:                return FAILED
-            if     s4.allParents     != {finUnsure}:                return FAILED
-            if     s4.type           != math.Set.Type.Finite:       return FAILED
-            if     s4.unions         != []:                         return FAILED
-            if len(s5.conditions)    != 2:                          return FAILED # 1 from the default of s5 and 1 because desc is its parent
-            if     s5.sureset        != set():                      return FAILED
-            if     s5.unsureset      != set():                      return FAILED
-            if     s5.parents        != {desc}:                     return FAILED
-            if     s5.allParents     != {desc}:                     return FAILED
-            if     s5.type           != math.Set.Type.Descriptive:  return FAILED
-            if     s5.unions         != []:                         return FAILED
-            if len(s6.conditions)    != 2:                          return FAILED # 1 from the construction of s6 and 1 because desc is its parent
-            if     s6.sureset        != set():                      return FAILED
-            if     s6.unsureset      != set():                      return FAILED
-            if     s6.parents        != {desc}:                     return FAILED
-            if     s6.allParents     != {desc}:                     return FAILED
-            if     s6.type           != math.Set.Type.Descriptive:  return FAILED
-            if     s6.unions         != []:                         return FAILED
-            if len(s7.conditions)    != 2:                          return FAILED # 1 from the default of s7 and 1 because descCond is its parent
-            if     s7.sureset        != set():                      return FAILED
-            if     s7.unsureset      != set():                      return FAILED
-            if     s7.parents        != {descCond}:                 return FAILED
-            if     s7.allParents     != {descCond}:                 return FAILED
-            if     s7.type           != math.Set.Type.Descriptive:  return FAILED
-            if     s7.unions         != []:                         return FAILED
-            if len(s8.conditions)    != 2:                          return FAILED # 1 from the construction of s8 and 1 because descCond is its parent
-            if     s8.sureset        != set():                      return FAILED
-            if     s8.unsureset      != set():                      return FAILED
-            if     s8.parents        != {descCond}:                 return FAILED
-            if     s8.allParents     != {descCond}:                 return FAILED
-            if     s8.type           != math.Set.Type.Descriptive:  return FAILED
-            if     s8.unions         != []:                         return FAILED
-            if len(s9.conditions)    != 3:                          return FAILED # 2 from the construction of s9 and 1 because descCond is its parent
-            if     s9.sureset        != set():                      return FAILED
-            if     s9.unsureset      != set():                      return FAILED
-            if     s9.parents        != {descCond}:                 return FAILED
-            if     s9.allParents     != {descCond}:                 return FAILED
-            if     s9.type           != math.Set.Type.Descriptive:  return FAILED
-            if     s9.unions         != []:                         return FAILED
-            # TODO: test Set constructors where Set.Type is Union
+            if len(s1.conditions)     != 0:                                 return FAILED
+            if     s1.sureset         != {1, 2, 3}:                         return FAILED
+            if     s1.unsureset       != set():                             return FAILED
+            if     s1.parents         != {finSure}:                         return FAILED
+            if     s1.allParents      != {finSure}:                         return FAILED
+            if     s1.type            != math.Set.Type.Finite:              return FAILED
+            if     s1.unions          != []:                                return FAILED
+            if len(s2.conditions)     != 0:                                 return FAILED
+            if     s2.sureset         != set():                             return FAILED
+            if     s2.unsureset       != {1, 2, 3}:                         return FAILED
+            if     s2.parents         != {finUnsure}:                       return FAILED
+            if     s2.allParents      != {finUnsure}:                       return FAILED
+            if     s2.type            != math.Set.Type.Finite:              return FAILED
+            if     s2.unions          != []:                                return FAILED
+            if len(s3.conditions)     != 0:                                 return FAILED
+            if     s3.sureset         != set():                             return FAILED
+            if     s3.unsureset       != set():                             return FAILED
+            if     s3.parents         != {empty}:                           return FAILED
+            if     s3.allParents      != {empty}:                           return FAILED
+            if     s3.type            != math.Set.Type.Finite:              return FAILED
+            if     s3.unions          != []:                                return FAILED
+            if len(s4.conditions)     != 0:                                 return FAILED
+            if     s4.sureset         != set():                             return FAILED
+            if     s4.unsureset       != set():                             return FAILED
+            if     s4.parents         != {finUnsure}:                       return FAILED
+            if     s4.allParents      != {finUnsure}:                       return FAILED
+            if     s4.type            != math.Set.Type.Finite:              return FAILED
+            if     s4.unions          != []:                                return FAILED
+            if len(s5.conditions)     != 2:                                 return FAILED # 1 from the default of s5 and 1 because desc is its parent
+            if     s5.sureset         != set():                             return FAILED
+            if     s5.unsureset       != set():                             return FAILED
+            if     s5.parents         != {desc}:                            return FAILED
+            if     s5.allParents      != {desc}:                            return FAILED
+            if     s5.type            != math.Set.Type.Descriptive:         return FAILED
+            if     s5.unions          != []:                                return FAILED
+            if len(s6.conditions)     != 2:                                 return FAILED # 1 from the construction of s6 and 1 because desc is its parent
+            if     s6.sureset         != set():                             return FAILED
+            if     s6.unsureset       != set():                             return FAILED
+            if     s6.parents         != {desc}:                            return FAILED
+            if     s6.allParents      != {desc}:                            return FAILED
+            if     s6.type            != math.Set.Type.Descriptive:         return FAILED
+            if     s6.unions          != []:                                return FAILED
+            if len(s7.conditions)     != 2:                                 return FAILED # 1 from the default of s7 and 1 because descCond is its parent
+            if     s7.sureset         != set():                             return FAILED
+            if     s7.unsureset       != set():                             return FAILED
+            if     s7.parents         != {descCond}:                        return FAILED
+            if     s7.allParents      != {descCond}:                        return FAILED
+            if     s7.type            != math.Set.Type.Descriptive:         return FAILED
+            if     s7.unions          != []:                                return FAILED
+            if len(s8.conditions)     != 2:                                 return FAILED # 1 from the construction of s8 and 1 because descCond is its parent
+            if     s8.sureset         != set():                             return FAILED
+            if     s8.unsureset       != set():                             return FAILED
+            if     s8.parents         != {descCond}:                        return FAILED
+            if     s8.allParents      != {descCond}:                        return FAILED
+            if     s8.type            != math.Set.Type.Descriptive:         return FAILED
+            if     s8.unions          != []:                                return FAILED
+            if len(s9.conditions)     != 3:                                 return FAILED # 2 from the construction of s9 and 1 because descCond is its parent
+            if     s9.sureset         != set():                             return FAILED
+            if     s9.unsureset       != set():                             return FAILED
+            if     s9.parents         != {descCond}:                        return FAILED
+            if     s9.allParents      != {descCond}:                        return FAILED
+            if     s9.type            != math.Set.Type.Descriptive:         return FAILED
+            if     s9.unions          != []:                                return FAILED
+            if len(s10.conditions)    != 2:                                 return FAILED # 1 from the default construction of s10 and 1 because 'descCond | finSure' is listed as a parent
+            if     s10.sureset        != set():                             return FAILED
+            if     s10.unsureset      != set():                             return FAILED
+            if     s10.parents        != {union}:                           return FAILED
+            if     s10.allParents     != {union}:                           return FAILED
+            if     s10.type           != math.Set.Type.Union:               return FAILED
+            if     s10.unions         != [descCond, finSure]:               return FAILED
+            if len(s11.conditions)    != 3:                                 return FAILED # 1 from the construction of s11 and 2 because 'descCond | finSure' is listed as a parent and R is a parent
+            if     s11.sureset        != set():                             return FAILED
+            if     s11.unsureset      != set():                             return FAILED
+            if     s11.parents        != {union, math.Sets.R}:              return FAILED
+            if     s11.allParents     != {union, math.Sets.R, math.Sets.C}: return FAILED
+            if     s11.type           != math.Set.Type.Union:               return FAILED
+            if     s11.unions         != [descCond, finSure]:               return FAILED
 
             return PASSED
     # TODO: test _meetsConditions function
@@ -520,6 +536,7 @@ class TestMathSet(Tester):
         # TODO: add some union naming tests
         # TODO: add some sure/unsure set combinations naming tests
     ])
+    
     # TODO: split this Empty test over the member function tests when they are written
     def Empty() -> TestResult:
         """Tests the empty set"""

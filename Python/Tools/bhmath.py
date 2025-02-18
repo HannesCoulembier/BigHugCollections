@@ -183,6 +183,47 @@ class Set:
             ustr = ', '.join([union.__repr__() for union in self.unions])
             return f"The union of {ustr}"
         raise ValueError("Unknown Set.Type")
+    
+    def __or__(self, x:Any):
+        if not isinstance(x, Set): return NotImplemented
+
+        parents = set()
+        for parent1 in self.allParents & x.allParents:
+            parent1IsAncestor = False
+            for parent2 in self.allParents & x.allParents:
+                if parent1 in parent2.allParents:
+                    parent1IsAncestor = True
+                    break
+            if not parent1IsAncestor: parents.add(parent1)
+        res = Set(Set.Empty)
+        if self.type == Set.Type.Finite:
+            if x.type == Set.Type.Finite:
+                sureset = self.sureset | x.sureset
+                unsureset = (self.unsureset | x.unsureset) - sureset
+                res._private_init_(Set.Type.Finite, sureset, unsureset, [], [], parents)
+            elif x.type == Set.Type.Descriptive:
+                res._private_init_(Set.Type.Union, set(), set(), [self, x], [], parents)
+            elif x.type == Set.Type.Union:
+                res._private_init_(Set.Type.Union, set(), set(), [self]+x.unions, [], parents)
+            else:
+                raise ValueError("Unknown Set.Type")
+        elif self.type == Set.Type.Descriptive:
+            if x.type == Set.Type.Finite or x.type == Set.Type.Descriptive:
+                res._private_init_(Set.Type.Union, set(), set(), [self, x], [], parents)
+            elif x.type == Set.Type.Union:
+                res._private_init_(Set.Type.Union, set(), set(), [self]+x.unions, [], parents)
+            else:
+                raise ValueError("Unknown Set.Type")
+        elif self.type == Set.Type.Union:
+            if x.type == Set.Type.Finite or x.type == Set.Type.Descriptive:
+                res._private_init_(Set.Type.Union, set(), set(), [x]+self.unions, [], parents)
+            elif x.type == Set.Type.Union:
+                res._private_init_(Set.Type.Union, set(), set(), self.unions+x.unions, [], parents)
+            else:
+                raise ValueError("Unknown Set.Type")
+        else:
+            raise ValueError("Unknown Set.Type")
+        return res
 
 class Relation:
     def __init__(self, setA:Set, setB:Set, relation:Callable[[Any, Any], Union[Result, bool]]):
@@ -258,7 +299,7 @@ class Function:
 
 _ComplexNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Complex)])
 _RealNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Real)], parents={_ComplexNumbers})
-_AllFunctions = Set(Set.Descriptive, [lambda x:type(x)==Function])
+_AllFunctions = Set(Set.Descriptive, [lambda x:isinstance(x, Function)])
 _ComplexFunctions = Set(Set.Descriptive, [lambda x: _AllFunctions.contains(x) & x.domain.isSubset(_ComplexNumbers)], parents={_AllFunctions})
 
 class SymbolicInfinity:
