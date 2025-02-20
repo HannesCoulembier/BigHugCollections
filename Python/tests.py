@@ -509,32 +509,36 @@ class TestMathSet(Tester):
             if     s9.type            != math.Set.Type.Descriptive:         return FAILED
             if     s9.unions          != []:                                return FAILED
             if len(s10.conditions)    != 2:                                 return FAILED # 1 from the default construction of s10 and 1 because 'descCond | finSure' is listed as a parent
-            if     s10.sureset        != set():                             return FAILED
+            if     s10.sureset        != {1, 2, 3}:                         return FAILED
             if     s10.unsureset      != set():                             return FAILED
             if     s10.parents        != {union}:                           return FAILED
             if     s10.allParents     != {union}:                           return FAILED
             if     s10.type           != math.Set.Type.Union:               return FAILED
-            if     s10.unions         != [descCond, finSure]:               return FAILED
+            if     s10.unions         != [descCond]:                        return FAILED
             if len(s11.conditions)    != 3:                                 return FAILED # 1 from the construction of s11 and 2 because 'descCond | finSure' is listed as a parent and R is a parent
             if     s11.sureset        != set():                             return FAILED
-            if     s11.unsureset      != set():                             return FAILED
+            if     s11.unsureset      != {1, 2, 3}:                         return FAILED
             if     s11.parents        != {union, math.Sets.R}:              return FAILED
             if     s11.allParents     != {union, math.Sets.R, math.Sets.C}: return FAILED
             if     s11.type           != math.Set.Type.Union:               return FAILED
-            if     s11.unions         != [descCond, finSure]:               return FAILED
+            if     s11.unions         != [descCond]:                        return FAILED
 
             return PASSED
     # TODO: test _meetsConditions function
     # TODO: test contains function
     # TODO: test isSubSetOf function
     StringRepresentation = ReprTester([
-        (math.Set(math.Set.Empty),                                                                      "{}"                        ),
-        (math.Set(math.Set.Descriptive),                                                                "Descriptive Set"           ),
-        (math.Set({1, 2, 3}),                                                                           "{1, 2, 3}"                 ),
-        (math.Set(set()),                                                                               "{}"                        ),
-        (math.Set({1, 2, 3}, [lambda x: math.Result.UNSURE]),                                           "possibly {1, 2, 3}"        ),
-        (math.Set({1, 2, "3"}, [lambda x: math.Result.UNSURE if type(x)!=int else math.Result.TRUE]),   "{1, 2} and possibly {'3'}" ),
-        (math.Set({1}) | math.Set(math.Set.Descriptive),                                                "The union of: {1}, Descriptive Set" ),
+        (math.Set(math.Set.Empty),                                                                                                      "{}"                                                            ),
+        (math.Set(math.Set.Descriptive),                                                                                                "Descriptive Set"                                               ),
+        (math.Set({1, 2, 3}),                                                                                                           "{1, 2, 3}"                                                     ),
+        (math.Set(set()),                                                                                                               "{}"                                                            ),
+        (math.Set({1, 2, 3}, [lambda x: math.Result.UNSURE]),                                                                           "possibly {1, 2, 3}"                                            ),
+        (math.Set({1, 2, "3"}, [lambda x: math.Result.UNSURE if type(x)!=int else math.Result.TRUE]),                                   "{1, 2} and possibly {'3'}"                                     ),
+        (math.Set(math.Set.Descriptive) | math.Set(math.Set.Descriptive),                                                               "The union of 2 descriptive set(s)"                             ),
+        (math.Set(math.Set.Empty) | math.Set(math.Set.Descriptive),                                                                     "The union of 1 descriptive set(s)"                             ),
+        (math.Set({1}) | math.Set(math.Set.Descriptive),                                                                                "The union of 1 descriptive set(s) and {1}"                     ),
+        (math.Set({1}, [lambda x: math.Result.UNSURE]) | math.Set(math.Set.Descriptive),                                                "The union of 1 descriptive set(s) and possibly {1}"            ),
+        (math.Set({1, 2, "3"}, [lambda x: math.Result.UNSURE if type(x)!=int else math.Result.TRUE]) | math.Set(math.Set.Descriptive),  "The union of 1 descriptive set(s), {1, 2} and possibly {'3'}"  ),
     ])
     
     # TODO: split this Empty test over the member function tests when they are written

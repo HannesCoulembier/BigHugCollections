@@ -117,7 +117,18 @@ class Set:
                     unsureset.add(item)
                 self._private_init_(Set.Type.Finite, sureset, unsureset, [], [], parents)
             elif base.type == Set.Type.Union:
-                self._private_init_(Set.Type.Union, set(), set(), base.unions, conditions, parents)
+                sureset = set()
+                unsureset = set()
+                for item in base.sureset:
+                    results = [cond(item) for cond in conditions] + [parent.contains(item) for parent in parents]
+                    if Result.FALSE in results: continue
+                    if Result.UNSURE in results: unsureset.add(item)
+                    else: sureset.add(item)
+                for item in base.unsureset:
+                    results = [cond(item) for cond in conditions] + [parent.contains(item) for parent in parents]
+                    if Result.FALSE in results: continue
+                    unsureset.add(item)
+                self._private_init_(Set.Type.Union, sureset, unsureset, base.unions, conditions, parents)
             else:
                 raise ValueError("Unknown Set.Type")
         else:
@@ -136,7 +147,9 @@ class Set:
         if self.type == Set.Type.Descriptive:
             return meetsCond
         elif self.type == Set.Type.Union:
+            if x in self.sureset: return Result.TRUE
             isFalse = True
+            if x in self.unsureset: isFalse = False
             for union in self.unions:
                 r = union.contains(x)
                 if r == Result.TRUE: return meetsCond
@@ -180,14 +193,18 @@ class Set:
             else:
                 return f"{self.sureset} and possibly {self.unsureset}" if self.sureset != set() else f"possibly {self.unsureset}"
         if self.type == Set.Type.Union:
-            ustr = ', '.join([union.__repr__() for union in self.unions])
-            return f"The union of: {ustr}"
+            if self.sureset == set() and self.unsureset == set():
+                return f"The union of {len(self.unions)} descriptive set(s)"
+            if self.sureset == set():
+                return f"The union of {len(self.unions)} descriptive set(s) and possibly {self.unsureset}"
+            if self.unsureset == set():
+                return f"The union of {len(self.unions)} descriptive set(s) and {self.sureset}"
+            return f"The union of {len(self.unions)} descriptive set(s), {self.sureset} and possibly {self.unsureset}"
         raise ValueError("Unknown Set.Type")
     
     def __or__(self, x:Any):
         if not isinstance(x, Set): return NotImplemented
 
-        # TODO: make the finite sets use self.sureset and self.unsureset, simplifying the union of multiple finite sets. Change __repr__, isSubSetOf, contains and _meetConditions accordingly
         parents = set()
         for parent1 in self.allParents & x.allParents:
             parent1IsAncestor = False
@@ -203,20 +220,28 @@ class Set:
                 unsureset = (self.unsureset | x.unsureset) - sureset
                 res._private_init_(Set.Type.Finite, sureset, unsureset, [], [], parents)
             elif x.type == Set.Type.Descriptive:
-                res._private_init_(Set.Type.Union, set(), set(), [self, x], [], parents)
+                res._private_init_(Set.Type.Union, self.sureset, self.unsureset, [x], [], parents)
             elif x.type == Set.Type.Union:
-                res._private_init_(Set.Type.Union, set(), set(), [self]+x.unions, [], parents)
+                sureset = self.sureset | x.sureset
+                unsureset = (self.unsureset | x.unsureset) - sureset
+                res._private_init_(Set.Type.Union, sureset, unsureset, x.unions, [], parents)
             else:
                 raise ValueError("Unknown Set.Type")
         elif self.type == Set.Type.Descriptive:
-            if x.type == Set.Type.Finite or x.type == Set.Type.Descriptive:
+            if x.type == Set.Type.Finite:
+                res._private_init_(Set.Type.Union, x.sureset, x.unsureset, [self], [], parents)
+            elif x.type == Set.Type.Descriptive:
                 res._private_init_(Set.Type.Union, set(), set(), [self, x], [], parents)
             elif x.type == Set.Type.Union:
                 res._private_init_(Set.Type.Union, set(), set(), [self]+x.unions, [], parents)
             else:
                 raise ValueError("Unknown Set.Type")
         elif self.type == Set.Type.Union:
-            if x.type == Set.Type.Finite or x.type == Set.Type.Descriptive:
+            if x.type == Set.Type.Finite:
+                sureset = self.sureset | x.sureset
+                unsureset = (self.unsureset | x.unsureset) - sureset
+                res._private_init_(Set.Type.Union, sureset, unsureset, x.unions, [], parents)
+            elif x.type == Set.Type.Descriptive:
                 res._private_init_(Set.Type.Union, set(), set(), [x]+self.unions, [], parents)
             elif x.type == Set.Type.Union:
                 res._private_init_(Set.Type.Union, set(), set(), self.unions+x.unions, [], parents)
