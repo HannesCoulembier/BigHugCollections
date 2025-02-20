@@ -524,7 +524,42 @@ class TestMathSet(Tester):
             if     s11.unions         != [descCond]:                        return FAILED
 
             return PASSED
-    # TODO: test _meetsConditions function
+    def MeetsConditions() -> TestResult:
+        lT = lambda x: math.Result.TRUE
+        lU = lambda x: math.Result.UNSURE
+        lF = lambda x: math.Result.FALSE
+        lcrash = lambda x: 1/0
+        s1  = math.Set(math.Set.Descriptive, [])
+        s2  = math.Set(math.Set.Descriptive, [lT])
+        s3  = math.Set(math.Set.Descriptive, [lU])
+        s4  = math.Set(math.Set.Descriptive, [lF])
+        s5  = math.Set(math.Set.Descriptive, [lT, lT])
+        s6  = math.Set(math.Set.Descriptive, [lT, lU])
+        s7  = math.Set(math.Set.Descriptive, [lT, lF])
+        s8  = math.Set(math.Set.Descriptive, [lU, lT])
+        s9  = math.Set(math.Set.Descriptive, [lU, lU])
+        s10 = math.Set(math.Set.Descriptive, [lU, lF])
+        s11 = math.Set(math.Set.Descriptive, [lF, lT])
+        s12 = math.Set(math.Set.Descriptive, [lF, lU])
+        s13 = math.Set(math.Set.Descriptive, [lF, lF])
+        s14 = math.Set(math.Set.Descriptive, [lcrash])
+
+        if s1 ._meetsConditions("dummy") != math.Result.TRUE:   return FAILED
+        if s2 ._meetsConditions("dummy") != math.Result.TRUE:   return FAILED
+        if s3 ._meetsConditions("dummy") != math.Result.UNSURE: return FAILED
+        if s4 ._meetsConditions("dummy") != math.Result.FALSE:  return FAILED
+        if s5 ._meetsConditions("dummy") != math.Result.TRUE:   return FAILED
+        if s6 ._meetsConditions("dummy") != math.Result.UNSURE: return FAILED
+        if s7 ._meetsConditions("dummy") != math.Result.FALSE:  return FAILED
+        if s8 ._meetsConditions("dummy") != math.Result.UNSURE: return FAILED
+        if s9 ._meetsConditions("dummy") != math.Result.UNSURE: return FAILED
+        if s10._meetsConditions("dummy") != math.Result.FALSE:  return FAILED
+        if s11._meetsConditions("dummy") != math.Result.FALSE:  return FAILED
+        if s12._meetsConditions("dummy") != math.Result.FALSE:  return FAILED
+        if s13._meetsConditions("dummy") != math.Result.FALSE:  return FAILED
+        if s14._meetsConditions("dummy") != math.Result.FALSE:  return FAILED
+
+        return PASSED
     # TODO: test contains function
     # TODO: test isSubSetOf function
     StringRepresentation = ReprTester([
