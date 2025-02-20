@@ -181,12 +181,13 @@ class Set:
                 return f"{self.sureset} and possibly {self.unsureset}" if self.sureset != set() else f"possibly {self.unsureset}"
         if self.type == Set.Type.Union:
             ustr = ', '.join([union.__repr__() for union in self.unions])
-            return f"The union of {ustr}"
+            return f"The union of: {ustr}"
         raise ValueError("Unknown Set.Type")
     
     def __or__(self, x:Any):
         if not isinstance(x, Set): return NotImplemented
 
+        # TODO: make the finite sets use self.sureset and self.unsureset, simplifying the union of multiple finite sets. Change __repr__, isSubSetOf, contains and _meetConditions accordingly
         parents = set()
         for parent1 in self.allParents & x.allParents:
             parent1IsAncestor = False
@@ -246,21 +247,39 @@ class Relation:
         except:
             return Result.FALSE
         
-        if inA & inB == Result.UNSURE: return Result.UNSURE
-
         if type(result) == bool:
-            return Result.TRUE if result else Result.FALSE
+            return inA & inB if result else Result.FALSE
         elif type(result) == Result:
-            return result
+            return result & inA & inB
         else:
             raise TypeError("This Relation has an incorrectly defined relation function, as it did not return a boolean or a Result")
 
 class Function:
-    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=Set(Set.Descriptive), invFunc:Union[Callable[[Any], Any], None]=None):
+    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=Set(Set.Descriptive)):
         self.func = func
         self.domain = domain
         self.codomain = codomain
-        self.invFunc = invFunc
+
+        # associated functions
+        self.Inverse = None
+        self.Derivative = None
+        self.Integral = None
+        
+        # Maybe for future expansions?
+        # self.properties = {
+        #     "Injective":        None,
+        #     "Surjective":       None,
+        #     "Bijective":        None,   # equivalent to invertable
+        #     "Identity":         None,   # wether or not the Function is the identity function
+        #     "Constant":         None,   # Function gives constant result, regardless of input
+        #     "Even":             None,
+        #     "Odd":              None,
+        #     "Continous":        None,
+        #     "Differentiable":   None,   # Has a derivative
+        #     "Integrable":       None,   # Has an integral
+        #     "Smooth":           None,   # Is infinitely differentiable
+        #     "Analytic":         None,   # Any region can be defined by a convergent power series
+        # }
 
         if type(domain) != Set: raise TypeError("Expected domain to be of type Set")
         if type(codomain) != Set: raise TypeError("Expected codomain to be of type Set")
@@ -268,12 +287,6 @@ class Function:
         if len(inspect.signature(func).parameters) != 1: raise TypeError("Expected func parameter to have exactly one argument")
 
         self.relation = Relation(domain, codomain, lambda x, y: self(x)==y)
-        if self.invFunc != None:
-            if not isinstance(invFunc, Callable): raise TypeError("Expected invFunc parameter to be callable")
-            if len(inspect.signature(invFunc).parameters) != 1: raise TypeError("Expected invFunc parameter to have exactly one argument")
-
-    def hasInv(self)->bool:
-        return self.invFunc != None
 
     def inv(self)->Self:
         if self.invFunc == None: raise ValueError("This function has no inverse specified")
@@ -287,20 +300,14 @@ class Function:
         except:
             raise log("x is not part of the domain of this function", Severity.warn)
         if self.codomain.contains(y) == Result.FALSE: log("This function is not correctly defined, as it yielded a result that was outside of its codomain", Severity.warn)
-        
-        if self.invFunc != None:
-            try:
-                original = self.invFunc(y)
-            except:
-                raise log("This functions inverse is incorrectly defined as composition with the original function did not yield the identity function", Severity.warn)
-            if original != x: log("This functions inverse is incorrectly defined as composition with the original function did not yield the identity function", Severity.warn)
-        
+
         return y
 
 _ComplexNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Complex)])
 _RealNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Real)], parents={_ComplexNumbers})
 _AllFunctions = Set(Set.Descriptive, [lambda x:isinstance(x, Function)])
 _ComplexFunctions = Set(Set.Descriptive, [lambda x: _AllFunctions.contains(x) & x.domain.isSubset(_ComplexNumbers)], parents={_AllFunctions})
+_RealFunctions = Set(Set.Descriptive, [lambda x: _ComplexFunctions.contains(x) & x.domain.isSubset(_RealNumbers)], parents={_AllFunctions, _ComplexFunctions})
 
 class SymbolicInfinity:
     def __init__(self, pos=True):

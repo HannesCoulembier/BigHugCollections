@@ -528,13 +528,13 @@ class TestMathSet(Tester):
     # TODO: test contains function
     # TODO: test isSubSetOf function
     StringRepresentation = ReprTester([
-        (math.Set(math.Set.Empty),                              "{}"                ),
-        (math.Set(math.Set.Descriptive),                        "Descriptive Set"   ),
-        (math.Set({1, 2, 3}),                                   "{1, 2, 3}"         ),
-        (math.Set(set()),                                       "{}"                ),
-        (math.Set({1, 2, 3}, [lambda x: math.Result.UNSURE]),   "possibly {1, 2, 3}"),
-        # TODO: add some union naming tests
-        # TODO: add some sure/unsure set combinations naming tests
+        (math.Set(math.Set.Empty),                                                                      "{}"                        ),
+        (math.Set(math.Set.Descriptive),                                                                "Descriptive Set"           ),
+        (math.Set({1, 2, 3}),                                                                           "{1, 2, 3}"                 ),
+        (math.Set(set()),                                                                               "{}"                        ),
+        (math.Set({1, 2, 3}, [lambda x: math.Result.UNSURE]),                                           "possibly {1, 2, 3}"        ),
+        (math.Set({1, 2, "3"}, [lambda x: math.Result.UNSURE if type(x)!=int else math.Result.TRUE]),   "{1, 2} and possibly {'3'}" ),
+        (math.Set({1}) | math.Set(math.Set.Descriptive),                                                "The union of: {1}, Descriptive Set" ),
     ])
     
     # TODO: split this Empty test over the member function tests when they are written
@@ -567,6 +567,76 @@ class TestMathSet(Tester):
 
         return PASSED
 
+class TestMathRelation(Tester):
+    """Tests if the Relation class works as intended"""
+    def Constructor() -> TestResult:
+        """Tests if the __init__ method works as intended"""
+        s1 = math.Set({1})
+        s2 = math.Set({2})
+        lmda = lambda x, y: x+1==y
+        rel = math.Relation(s1, s2, lmda)
+        if rel.setA     != s1:      return FAILED
+        if rel.setB     != s2:      return FAILED
+        if rel.relation != lmda:    return FAILED
+
+        try:
+            math.Relation("dummy", s2, lmda)
+            return FAILED
+        except(TypeError): pass
+        try:
+            math.Relation(s1, "dummy", lmda)
+            return FAILED
+        except(TypeError): pass
+        try:
+            math.Relation(s1, s2, "dummy")
+            return FAILED
+        except(TypeError): pass
+        try:
+            math.Relation(s1, s2, lambda x: True)
+            return FAILED
+        except(TypeError): pass
+
+        return PASSED
+    def Evaluate() -> TestResult:
+        """Tests if the __call__ method works as expected"""
+        s135 = math.Set({1, 3, 5})
+        s123 = math.Set({1, 2, 3})
+        s1 = math.Set({1})
+        s246 = math.Set({2, 4, 6})
+        s4Cond = math.Set({4}, [lambda x: math.Result.UNSURE])
+        s246Cond = math.Set({2, 4, 6}, [lambda x: math.Result.UNSURE])
+
+        r1 = math.Relation(s135, s246,      lambda x, y: 1/0)
+        r2 = math.Relation(s135, s246Cond,  lambda x, y: 1/0)
+        r3 = math.Relation(s135, s246,      lambda x, y: x+1 == y)
+        r4 = math.Relation(s123, s4Cond,    lambda x, y: x+1==y)
+        r5 = math.Relation(s135, s246,      lambda x, y: True)
+        r6 = math.Relation(s135, s246,      lambda x, y: False)
+        r7 = math.Relation(s123, s4Cond,    lambda x, y: True)
+        r8 = math.Relation(s123, s4Cond,    lambda x, y: False)
+        badboi = math.Relation(s1, s1, lambda x, y: "dummy")
+
+        if r1(1, 2) != math.Result.FALSE:   return FAILED
+        if r2(1, 2) != math.Result.FALSE:   return FAILED
+        if r3(0, 2) != math.Result.FALSE:   return FAILED
+        if r3(1, 0) != math.Result.FALSE:   return FAILED
+        if r3(0, 0) != math.Result.FALSE:   return FAILED
+        if r3(1, 4) != math.Result.FALSE:   return FAILED
+        if r3(1, 2) != math.Result.TRUE:    return FAILED
+        if r4(2, 4) != math.Result.FALSE:   return FAILED
+        if r4(3, 4) != math.Result.UNSURE:  return FAILED
+        if r5(3, 4) != math.Result.TRUE:    return FAILED
+        if r6(3, 4) != math.Result.FALSE:   return FAILED
+        if r7(3, 4) != math.Result.UNSURE:  return FAILED
+        if r8(3, 4) != math.Result.FALSE:   return FAILED
+
+        try:
+            badboi(1, 1)
+            return FAILED
+        except: pass
+
+        return PASSED
+
 
 
 # ----- Grouped tests -----------------------------------------------------------------------------
@@ -575,6 +645,7 @@ class TestAllMathTests(Tester):
     Result = TestMathResult
     SymbolicInfinity = TestMathSymbolicInfinity
     Set = TestMathSet
+    Relation = TestMathRelation
 
 # ----- EVERYTHING --------------------------------------------------------------------------------
 class TestEVERYTHING(Tester):

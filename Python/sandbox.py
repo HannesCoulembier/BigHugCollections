@@ -46,7 +46,7 @@ print(condOneTwo.isSubSetOf(oneTwo))
 
 # print("9+0.2j" in math.Sets.C)
 
-func1 = math.Function(lambda x:3*x, math.Sets.R, math.Sets.R, lambda x:x/3)
+func1 = math.Function(lambda x:3*x, math.Sets.R, math.Sets.R)
 print(func1.domain)
 
 rel1 = math.Relation(oneTwo, finGen, lambda a, b=2: a%2==b%2)
