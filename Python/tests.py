@@ -525,6 +525,7 @@ class TestMathSet(Tester):
 
             return PASSED
     def MeetsConditions() -> TestResult:
+        """Tests if the _meetsConditions method works as intended"""
         lT = lambda x: math.Result.TRUE
         lU = lambda x: math.Result.UNSURE
         lF = lambda x: math.Result.FALSE
@@ -562,6 +563,7 @@ class TestMathSet(Tester):
         return PASSED
     # TODO: test contains function
     # TODO: test isSubSetOf function
+    # TODO: test union creation
     StringRepresentation = ReprTester([
         (math.Set(math.Set.Empty),                                                                                                      "{}"                                                            ),
         (math.Set(math.Set.Descriptive),                                                                                                "Descriptive Set"                                               ),

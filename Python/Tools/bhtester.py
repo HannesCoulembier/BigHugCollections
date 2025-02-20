@@ -34,6 +34,8 @@ class Tester:
         for testName in testNames:
             if not silent: log(f"Testing: '{testName}'", Severity.info)
             method = getattr(cls, testName)
+            if method.__doc__ == None or method.__doc__ == "": log(f"Test '{testName}' has no docstring", Severity.warn)
+
             try:
                 if inspect.signature(method).parameters == sig1:
                     res = method()
@@ -94,6 +96,7 @@ class TestBHTester(Tester):
             except(TypeError): pass
             return PASSED        
         def EqualityOperator() -> TestResult:
+            """Tests if the __eq__ method works as intended"""
             if TestResult(0, 0) != TestResult(0, 0): return FAILED
             if TestResult(1, 0) != TestResult(1, 0): return FAILED
             if TestResult(0, 1) != TestResult(0, 1): return FAILED
@@ -127,34 +130,67 @@ class TestBHTester(Tester):
         def MethodDetection() -> TestResult:
             """Tests if the test methods of a child are correctly detected"""
             class Child1(Tester):
-                def m1() -> TestResult: return PASSED
-                def m2() -> TestResult: return PASSED
+                def m1() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
             class Child2(Tester):
-                def _m1() -> TestResult: return PASSED
-                def m2() -> TestResult: return PASSED
+                def _m1() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
             class Child3(Tester):
                 m1 = PASSED
-                def m2() -> TestResult: return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
             class Child4(Tester):
-                def m1(incorrect_argument_name) -> TestResult: return PASSED
-                def m2() -> TestResult: return PASSED
+                def m1(incorrect_argument_name) -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
             class Child4(Tester):
-                def m1(silent) -> TestResult: return PASSED # Has no default value nor type annotation
-                def m2() -> TestResult: return PASSED
+                def m1(silent) -> TestResult: # Has no default value nor type annotation
+                    """This is a testmethod"""
+                    return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
             class Child5(Tester):
-                def m1(silent=False) -> TestResult: return PASSED # Has no type annotation
-                def m2() -> TestResult: return PASSED
+                def m1(silent=False) -> TestResult: # Has no type annotation
+                    """This is a testmethod"""
+                    return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
             class Child6(Tester):
-                def m1(silent:bool) -> TestResult: return PASSED # Has no default value
-                def m2() -> TestResult: return PASSED
+                def m1(silent:bool) -> TestResult: # Has no default value
+                    """This is a testmethod"""
+                    return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
             class Child7(Tester):
-                def m1(silent:bool = True) -> TestResult: return PASSED # Has incorrect default value
-                def m2() -> TestResult: return PASSED
+                def m1(silent:bool = True) -> TestResult: # Has incorrect default value
+                    """This is a testmethod"""
+                    return PASSED
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return PASSED
 
             # Some special cases
             class Child8(Tester):
                 class Baby(Tester):
-                    def m() -> TestResult: return PASSED
+                    """This is a test class"""
+                    def m() -> TestResult:
+                        """This is a test method"""
+                        return PASSED
             class Child9(Tester):
                 StringBaby = ReprTester([
                     (True, "True")
@@ -175,16 +211,28 @@ class TestBHTester(Tester):
         def CrashHandling() -> TestResult:
             """Tests if crashes are handled correctly"""
             class Child1(Tester):
-                def crash() -> TestResult: raise Exception
+                def crash() -> TestResult:
+                    """This is a testmethod"""
+                    raise Exception
             class Child2(Tester):
-                def crash() -> TestResult: raise Exception("Error message")
+                def crash() -> TestResult:
+                    """This is a testmethod"""
+                    raise Exception("Error message")
             class Child3(Tester):
-                def crash() -> TestResult: raise BaseException
+                def crash() -> TestResult:
+                    """This is a testmethod"""
+                    raise BaseException
             class Child4(Tester):
-                def crash() -> TestResult: raise BaseException("Error message")
+                def crash() -> TestResult:
+                    """This is a testmethod"""
+                    raise BaseException("Error message")
             class Child5(Tester):
-                def crash1() -> TestResult: raise Exception
-                def crash2() -> TestResult: raise Exception
+                def crash1() -> TestResult:
+                    """This is a testmethod"""
+                    raise Exception
+                def crash2() -> TestResult:
+                    """This is a testmethod"""
+                    raise Exception
 
             if Child1(silent=True) != TestResult(0, 1): return FAILED
             if Child2(silent=True) != TestResult(0, 1): return FAILED
@@ -196,16 +244,30 @@ class TestBHTester(Tester):
         def MethodEvaluation() -> TestResult:
             """Tests if the result of a test method is processed correctly"""
             class Child1(Tester):
-                def m() -> TestResult: return TestResult(0, 0)
+                def m() -> TestResult:
+                    """This is a testmethod"""
+                    return TestResult(0, 0)
             class Child2(Tester):
-                def m() -> TestResult: return TestResult(1, 2)
+                def m() -> TestResult:
+                    """This is a testmethod"""
+                    return TestResult(1, 2)
             class Child3(Tester):
-                def m() -> TestResult: return "dummy"
+                def m() -> TestResult:
+                    """This is a testmethod"""
+                    return "dummy"
             class Child4(Tester):
-                def m1() -> TestResult: return TestResult(1, 2)
-                def m2() -> TestResult: return "dummy"
-                def m3() -> TestResult: return TestResult(1, 2)
-                def m4() -> TestResult: return TestResult(0, 0)
+                def m1() -> TestResult:
+                    """This is a testmethod"""
+                    return TestResult(1, 2)
+                def m2() -> TestResult:
+                    """This is a testmethod"""
+                    return "dummy"
+                def m3() -> TestResult:
+                    """This is a testmethod"""
+                    return TestResult(1, 2)
+                def m4() -> TestResult:
+                    """This is a testmethod"""
+                    return TestResult(0, 0)
 
             if Child1(silent=True) != TestResult(0, 0): return FAILED
             if Child2(silent=True) != TestResult(1, 2): return FAILED
