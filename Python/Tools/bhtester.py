@@ -2,7 +2,7 @@ if __name__ == "__main__":  from       bhlog import log, Severity
 else:                       from Tools.bhlog import log, Severity
 
 import inspect
-from typing import Any
+from typing import Any, Self
 from collections import OrderedDict
 
 class TestResult:
@@ -19,6 +19,9 @@ class TestResult:
     def __eq__(self, x:Any) -> bool:
         if type(x) != TestResult: return NotImplemented
         return self.succeeded == x.succeeded and self.testCount == x.testCount
+    def __add__(self, x:Any) -> Self:
+        if type(x) != TestResult: return NotImplemented
+        return TestResult(self.succeeded + x.succeeded, self.testCount + x.testCount)
 
 PASSED = TestResult(1, 1)
 FAILED = TestResult(0, 1)
@@ -43,15 +46,14 @@ class Tester:
                     res = method(silent=True)
             except:
                 if not silent: log(f"Crashed", Severity.warn)
-                result.testCount += 1
+                result += FAILED
                 continue
 
             if type(res) != TestResult:
                 if not silent: log(f"Wrongly defined test: test '{testName}' did not return a TestResult. Instead got type {type(res)}", Severity.error)
                 result.testCount += 1
                 continue
-            result.succeeded += res.succeeded
-            result.testCount += res.testCount
+            result += res
             
         if not silent: log(result, Severity.info)
 
@@ -59,7 +61,7 @@ class Tester:
 
 class ReprTester:
     """Tests if the __str__ and __repr__ methods work as intended for every pair in a list"""
-    def __init__(self, pairs:list[tuple[Any, str]]):
+    def __init__(self, pairs:list[tuple[Any, Any]]):
         if type(pairs) != list: raise TypeError("Pairs must be a list of pairs")
         if len(pairs) != 0:
             if set(type(pair) for pair in pairs) != {tuple}: raise TypeError("Every pair in pairs must be a tuple")
@@ -75,7 +77,27 @@ class ReprTester:
             except:
                 continue
         return TestResult(succeeded=succeeded, testCount=len(self.pairs))
+
+class EqualityTester:
+    """Tests the equality for a list of pairs"""
+    def __init__(self, pairs:list[tuple[Any, Any]]):
+        if type(pairs) != list: raise TypeError("Pairs must be a list of pairs")
+        if len(pairs) != 0:
+            if set(type(pair) for pair in pairs) != {tuple}: raise TypeError("Every pair in pairs must be a tuple")
+            if set(len(pair) for pair in pairs) != {2}: raise ValueError("Every pair in pairs must be a tuple with exactly 2 items")
+        self.pairs = pairs
     
+    def __call__(self) -> TestResult:
+        """Tests if the __str__ and __repr__ methods work as intended for every pair in the list"""
+        res = TestResult(0, 0)
+        for pair in self.pairs:
+            try:
+                res += PASSED if pair[0] == pair[1] else FAILED
+            except:
+                res += FAILED
+        return res
+    
+
 
 class TestBHTester(Tester):
     """Tests all bhtester related objects"""
@@ -118,6 +140,7 @@ class TestBHTester(Tester):
             (TestResult(1, 9), "1 out of 9 tests succeeded (11.11%)"),
             (TestResult(2, 3), "2 out of 3 tests succeeded (66.67%)"),
         ])
+
     class TestTester(Tester):
         """Tests if the Tester class works as intended
 
