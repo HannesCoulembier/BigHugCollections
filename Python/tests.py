@@ -2,6 +2,8 @@ from Tools.bhtester import Tester, ReprTester, TestResult, PASSED, FAILED, TestB
 
 import Tools.bhmath as math
 
+from numbers import Real
+
 # ----- All individual tests ----------------------------------------------------------------------
 class TestMathResult(Tester):
     """Tests if the Result class works as intended"""
@@ -136,75 +138,82 @@ class TestMathSymbolicInfinity(Tester):
     ])
     def EqualityOperator() -> TestResult:
         """Tests if the __eq__ method works as intended"""
-        if (math.SymbolicInfinity(False) == math.SymbolicInfinity(False)) != True:  return FAILED
-        if (math.SymbolicInfinity(False) == math.SymbolicInfinity(True))  != False: return FAILED
-        if (math.SymbolicInfinity(True)  == math.SymbolicInfinity(False)) != False: return FAILED
-        if (math.SymbolicInfinity(True)  == math.SymbolicInfinity(True))  != True:  return FAILED
+        test = EqualityTester([
+            ((math.SymbolicInfinity(False) == math.SymbolicInfinity(False)),  True),
+            ((math.SymbolicInfinity(False) == math.SymbolicInfinity(True)),   False),
+            ((math.SymbolicInfinity(True)  == math.SymbolicInfinity(False)),  False),
+            ((math.SymbolicInfinity(True)  == math.SymbolicInfinity(True)),   True),
         
-        if math.SymbolicInfinity(False).__eq__("Dummy")  != NotImplemented: return FAILED
-        if math.SymbolicInfinity(True).__eq__("Dummy")   != NotImplemented: return FAILED
-        return PASSED
+            (math.SymbolicInfinity(False).__eq__("Dummy"), NotImplemented),
+            (math.SymbolicInfinity(True).__eq__("Dummy"),  NotImplemented),
+        ])
+        return test()
     def NegationOperator() -> TestResult:
         """Tests if the __neg__ method works as intended"""
-        if -math.SymbolicInfinity(False) != math.SymbolicInfinity(True):  return FAILED
-        if -math.SymbolicInfinity(True)  != math.SymbolicInfinity(False): return FAILED
-        return PASSED
+        test = EqualityTester([
+            (-math.SymbolicInfinity(False), math.SymbolicInfinity(True)),
+            (-math.SymbolicInfinity(True),  math.SymbolicInfinity(False)),    
+        ])
+        return test()
     def ComparisonOperators() -> TestResult:
         """Tests if the __gt__, __lt__, __ge__ and __le__ methods work as intended"""
         P = math.SymbolicInfinity()
         N = -P
-        if (N >  N) != False: return FAILED
-        if (N >  P) != False: return FAILED
-        if (P >  N) != True:  return FAILED
-        if (P >  P) != False: return FAILED
-        if (N >= N) != True:  return FAILED
-        if (N >= P) != False: return FAILED
-        if (P >= N) != True:  return FAILED
-        if (P >= P) != True:  return FAILED
-        if (N <  N) != False: return FAILED
-        if (N <  P) != True:  return FAILED
-        if (P <  N) != False: return FAILED
-        if (P <  P) != False: return FAILED
-        if (N <= N) != True:  return FAILED
-        if (N <= P) != True:  return FAILED
-        if (P <= N) != False: return FAILED
-        if (P <= P) != True:  return FAILED
 
-        if (N >  0) != False: return FAILED
-        if (P >  0) != True:  return FAILED
-        if (N >= 0) != False: return FAILED
-        if (P >= 0) != True:  return FAILED
-        if (N <  0) != True:  return FAILED
-        if (P <  0) != False: return FAILED
-        if (N <= 0) != True:  return FAILED
-        if (P <= 0) != False: return FAILED
-        if (N >  28.71) != False: return FAILED
-        if (P >  28.71) != True:  return FAILED
-        if (N >= 28.71) != False: return FAILED
-        if (P >= 28.71) != True:  return FAILED
-        if (N <  28.71) != True:  return FAILED
-        if (P <  28.71) != False: return FAILED
-        if (N <= 28.71) != True:  return FAILED
-        if (P <= 28.71) != False: return FAILED
+        test = EqualityTester([
+            ((N >  N), False),
+            ((N >  P), False),
+            ((P >  N), True),
+            ((P >  P), False),
+            ((N >= N), True),
+            ((N >= P), False),
+            ((P >= N), True),
+            ((P >= P), True),
+            ((N <  N), False),
+            ((N <  P), True),
+            ((P <  N), False),
+            ((P <  P), False),
+            ((N <= N), True),
+            ((N <= P), True),
+            ((P <= N), False),
+            ((P <= P), True),
 
-        if N.__gt__("Dummy") != NotImplemented: return FAILED
-        if P.__gt__("Dummy") != NotImplemented: return FAILED
-        if N.__ge__("Dummy") != NotImplemented: return FAILED
-        if P.__ge__("Dummy") != NotImplemented: return FAILED
-        if N.__lt__("Dummy") != NotImplemented: return FAILED
-        if P.__lt__("Dummy") != NotImplemented: return FAILED
-        if N.__le__("Dummy") != NotImplemented: return FAILED
-        if P.__le__("Dummy") != NotImplemented: return FAILED
+            ((N >  0), False),
+            ((P >  0), True),
+            ((N >= 0), False),
+            ((P >= 0), True),
+            ((N <  0), True),
+            ((P <  0), False),
+            ((N <= 0), True),
+            ((P <= 0), False),
+            ((N >  28.71), False),
+            ((P >  28.71), True),
+            ((N >= 28.71), False),
+            ((P >= 28.71), True),
+            ((N <  28.71), True),
+            ((P <  28.71), False),
+            ((N <= 28.71), True),
+            ((P <= 28.71), False),
+
+            (N.__gt__("Dummy"), NotImplemented),
+            (P.__gt__("Dummy"), NotImplemented),
+            (N.__ge__("Dummy"), NotImplemented),
+            (P.__ge__("Dummy"), NotImplemented),
+            (N.__lt__("Dummy"), NotImplemented),
+            (P.__lt__("Dummy"), NotImplemented),
+            (N.__le__("Dummy"), NotImplemented),
+            (P.__le__("Dummy"), NotImplemented),
         
-        if N.__gt__(1.2+0.3j) != NotImplemented: return FAILED
-        if P.__gt__(1.2+0.3j) != NotImplemented: return FAILED
-        if N.__ge__(1.2+0.3j) != NotImplemented: return FAILED
-        if P.__ge__(1.2+0.3j) != NotImplemented: return FAILED
-        if N.__lt__(1.2+0.3j) != NotImplemented: return FAILED
-        if P.__lt__(1.2+0.3j) != NotImplemented: return FAILED
-        if N.__le__(1.2+0.3j) != NotImplemented: return FAILED
-        if P.__le__(1.2+0.3j) != NotImplemented: return FAILED
-        return PASSED
+            (N.__gt__(1.2+0.3j), NotImplemented),
+            (P.__gt__(1.2+0.3j), NotImplemented),
+            (N.__ge__(1.2+0.3j), NotImplemented),
+            (P.__ge__(1.2+0.3j), NotImplemented),
+            (N.__lt__(1.2+0.3j), NotImplemented),
+            (P.__lt__(1.2+0.3j), NotImplemented),
+            (N.__le__(1.2+0.3j), NotImplemented),
+            (P.__le__(1.2+0.3j), NotImplemented),
+        ])
+        return test()
 
 class TestMathSet(Tester):
     """Tests if the Set class works as intended"""
@@ -253,7 +262,7 @@ class TestMathSet(Tester):
                 (empty1.parents,      set()),
                 (empty1.allParents,   set()),
                 (empty1.type,         math.Set.Type.Finite),
-                (empty1.unions,       []),
+                (empty1.unions,       set()),
             
                 (empty2.conditions,   []),
                 (empty2.sureset,      set()),
@@ -261,7 +270,7 @@ class TestMathSet(Tester):
                 (empty2.parents,      set()),
                 (empty2.allParents,   set()),
                 (empty2.type,         math.Set.Type.Finite),
-                (empty2.unions,       []),
+                (empty2.unions,       set()),
             ])
             return test()
         def Descriptive() -> TestResult:
@@ -278,28 +287,28 @@ class TestMathSet(Tester):
                 (    desc1.parents,      set()),
                 (    desc1.allParents,   set()),
                 (    desc1.type,         math.Set.Type.Descriptive),
-                (    desc1.unions,       []),
+                (    desc1.unions,       set()),
                 (len(desc2.conditions),  1),
                 (    desc2.sureset,      set()),
                 (    desc2.unsureset,    set()),
                 (    desc2.parents,      set()),
                 (    desc2.allParents,   set()),
                 (    desc2.type,         math.Set.Type.Descriptive),
-                (    desc2.unions,       []),
+                (    desc2.unions,       set()),
                 (len(desc3.conditions),  2),
                 (    desc3.sureset,      set()),
                 (    desc3.unsureset,    set()),
                 (    desc3.parents,      {math.Sets.R}),
                 (    desc3.allParents,   {math.Sets.R, math.Sets.C}),
                 (    desc3.type,         math.Set.Type.Descriptive),
-                (    desc3.unions,       []),
+                (    desc3.unions,       set()),
                 (len(desc4.conditions),  2),
                 (    desc4.sureset,      set()),
                 (    desc4.unsureset,    set()),
                 (    desc4.parents,      {math.Sets.R}),
                 (    desc4.allParents,   {math.Sets.R, math.Sets.C}),
                 (    desc4.type,         math.Set.Type.Descriptive),
-                (    desc4.unions,       []),
+                (    desc4.unions,       set()),
             ])
 
             return test()
@@ -328,98 +337,98 @@ class TestMathSet(Tester):
                 (    lst1.parents,        set()),
                 (    lst1.allParents,     set()),
                 (    lst1.type,           math.Set.Type.Finite),
-                (    lst1.unions,         []),
+                (    lst1.unions,         set()),
                 (len(lst2.conditions),    0),
                 (    lst2.sureset,        {1, 2, "3"}),
                 (    lst2.unsureset,      set()),
                 (    lst2.parents,        set()),
                 (    lst2.allParents,     set()),
                 (    lst2.type,           math.Set.Type.Finite),
-                (    lst2.unions,         []),
+                (    lst2.unions,         set()),
                 (len(lst3.conditions),    0),
                 (    lst3.sureset,        set()),
                 (    lst3.unsureset,      set()),
                 (    lst3.parents,        set()),
                 (    lst3.allParents,     set()),
                 (    lst3.type,           math.Set.Type.Finite),
-                (    lst3.unions,         []),
+                (    lst3.unions,         set()),
                 (len(lst4.conditions),    0),
                 (    lst4.sureset,        set()),
                 (    lst4.unsureset,      {1, 2, "3"}),
                 (    lst4.parents,        set()),
                 (    lst4.allParents,     set()),
                 (    lst4.type,           math.Set.Type.Finite),
-                (    lst4.unions,         []),
+                (    lst4.unions,         set()),
                 (len(lst5.conditions),    0),
                 (    lst5.sureset,        {1, 2, "3"}),
                 (    lst5.unsureset,      set()),
                 (    lst5.parents,        set()),
                 (    lst5.allParents,     set()),
                 (    lst5.type,           math.Set.Type.Finite),
-                (    lst5.unions,         []),
+                (    lst5.unions,         set()),
                 (len(lst6.conditions),    0),
                 (    lst6.sureset,        {1, 2}),
                 (    lst6.unsureset,      set()),
                 (    lst6.parents,        {math.Sets.R}),
                 (    lst6.allParents,     {math.Sets.R, math.Sets.C}),
                 (    lst6.type,           math.Set.Type.Finite),
-                (    lst6.unions,         []),
+                (    lst6.unions,         set()),
                 (len(lst7.conditions),    0),
                 (    lst7.sureset,        set()),
                 (    lst7.unsureset,      {1, 2}),
                 (    lst7.parents,        {math.Sets.R}),
                 (    lst7.allParents,     {math.Sets.R, math.Sets.C}),
                 (    lst7.type,           math.Set.Type.Finite),
-                (    lst7.unions,         []),
+                (    lst7.unions,         set()),
                 (len(set1.conditions),    0),
                 (    set1.sureset,        set()),
                 (    set1.unsureset,      set()),
                 (    set1.parents,        set()),
                 (    set1.allParents,     set()),
                 (    set1.type,           math.Set.Type.Finite),
-                (    set1.unions,         []),
+                (    set1.unions,         set()),
                 (len(set2.conditions),    0),
                 (    set2.sureset,        {1, 2, "3"}),
                 (    set2.unsureset,      set()),
                 (    set2.parents,        set()),
                 (    set2.allParents,     set()),
                 (    set2.type,           math.Set.Type.Finite),
-                (    set2.unions,         []),
+                (    set2.unions,         set()),
                 (len(set3.conditions),    0),
                 (    set3.sureset,        set()),
                 (    set3.unsureset,      set()),
                 (    set3.parents,        set()),
                 (    set3.allParents,     set()),
                 (    set3.type,           math.Set.Type.Finite),
-                (    set3.unions,         []),
+                (    set3.unions,         set()),
                 (len(set4.conditions),    0),
                 (    set4.sureset,        set()),
                 (    set4.unsureset,      {1, 2, "3"}),
                 (    set4.parents,        set()),
                 (    set4.allParents,     set()),
                 (    set4.type,           math.Set.Type.Finite),
-                (    set4.unions,         []),
+                (    set4.unions,         set()),
                 (len(set5.conditions),    0),
                 (    set5.sureset,        {1, 2, "3"}),
                 (    set5.unsureset,      set()),
                 (    set5.parents,        set()),
                 (    set5.allParents,     set()),
                 (    set5.type,           math.Set.Type.Finite),
-                (    set5.unions,         []),
+                (    set5.unions,         set()),
                 (len(set6.conditions),    0),
                 (    set6.sureset,        {1, 2}),
                 (    set6.unsureset,      set()),
                 (    set6.parents,        {math.Sets.R}),
                 (    set6.allParents,     {math.Sets.R, math.Sets.C}),
                 (    set6.type,           math.Set.Type.Finite),
-                (    set6.unions,         []),
+                (    set6.unions,         set()),
                 (len(set7.conditions),    0),
                 (    set7.sureset,        set()),
                 (    set7.unsureset,      {1, 2}),
                 (    set7.parents,        {math.Sets.R}),
                 (    set7.allParents,     {math.Sets.R, math.Sets.C}),
                 (    set7.type,           math.Set.Type.Finite),
-                (    set7.unions,         []),
+                (    set7.unions,         set()),
             ])
 
             return test()
@@ -451,77 +460,77 @@ class TestMathSet(Tester):
                 (    s1.parents,         {finSure}),
                 (    s1.allParents,      {finSure}),
                 (    s1.type,            math.Set.Type.Finite),
-                (    s1.unions,          []),
+                (    s1.unions,          set()),
                 (len(s2.conditions),     0),
                 (    s2.sureset,         set()),
                 (    s2.unsureset,       {1, 2, 3}),
                 (    s2.parents,         {finUnsure}),
                 (    s2.allParents,      {finUnsure}),
                 (    s2.type,            math.Set.Type.Finite),
-                (    s2.unions,          []),
+                (    s2.unions,          set()),
                 (len(s3.conditions),     0),
                 (    s3.sureset,         set()),
                 (    s3.unsureset,       set()),
                 (    s3.parents,         {empty}),
                 (    s3.allParents,      {empty}),
                 (    s3.type,            math.Set.Type.Finite),
-                (    s3.unions,          []),
+                (    s3.unions,          set()),
                 (len(s4.conditions),     0),
                 (    s4.sureset,         set()),
                 (    s4.unsureset,       set()),
                 (    s4.parents,         {finUnsure}),
                 (    s4.allParents,      {finUnsure}),
                 (    s4.type,            math.Set.Type.Finite),
-                (    s4.unions,          []),
+                (    s4.unions,          set()),
                 (len(s5.conditions),     2), # 1 from the default of s5 and 1 because desc is its parent
                 (    s5.sureset,         set()),
                 (    s5.unsureset,       set()),
                 (    s5.parents,         {desc}),
                 (    s5.allParents,      {desc}),
                 (    s5.type,            math.Set.Type.Descriptive),
-                (    s5.unions,          []),
+                (    s5.unions,          set()),
                 (len(s6.conditions),     2), # 1 from the construction of s6 and 1 because desc is its parent
                 (    s6.sureset,         set()),
                 (    s6.unsureset,       set()),
                 (    s6.parents,         {desc}),
                 (    s6.allParents,      {desc}),
                 (    s6.type,            math.Set.Type.Descriptive),
-                (    s6.unions,          []),
+                (    s6.unions,          set()),
                 (len(s7.conditions),     2), # 1 from the default of s7 and 1 because descCond is its parent
                 (    s7.sureset,         set()),
                 (    s7.unsureset,       set()),
                 (    s7.parents,         {descCond}),
                 (    s7.allParents,      {descCond}),
                 (    s7.type,            math.Set.Type.Descriptive),
-                (    s7.unions,          []),
+                (    s7.unions,          set()),
                 (len(s8.conditions),     2), # 1 from the construction of s8 and 1 because descCond is its parent
                 (    s8.sureset,         set()),
                 (    s8.unsureset,       set()),
                 (    s8.parents,         {descCond}),
                 (    s8.allParents,      {descCond}),
                 (    s8.type,            math.Set.Type.Descriptive),
-                (    s8.unions,          []),
+                (    s8.unions,          set()),
                 (len(s9.conditions),     3), # 2 from the construction of s9 and 1 because descCond is its parent
                 (    s9.sureset,         set()),
                 (    s9.unsureset,       set()),
                 (    s9.parents,         {descCond}),
                 (    s9.allParents,      {descCond}),
                 (    s9.type,            math.Set.Type.Descriptive),
-                (    s9.unions,          []),
+                (    s9.unions,          set()),
                 (len(s10.conditions),    2), # 1 from the default construction of s10 and 1 because 'descCond | finSure' is listed as a parent
                 (    s10.sureset,        {1, 2, 3}),
                 (    s10.unsureset,      set()),
                 (    s10.parents,        {union}),
                 (    s10.allParents,     {union}),
                 (    s10.type,           math.Set.Type.Union),
-                (    s10.unions,         [descCond]),
+                (    s10.unions,         {descCond}),
                 (len(s11.conditions),    3), # 1 from the construction of s11 and 2 because 'descCond | finSure' is listed as a parent and R is a parent
                 (    s11.sureset,        set()),
                 (    s11.unsureset,      {1, 2, 3}),
                 (    s11.parents,        {union, math.Sets.R}),
                 (    s11.allParents,     {union, math.Sets.R, math.Sets.C}),
                 (    s11.type,           math.Set.Type.Union),
-                (    s11.unions,         [descCond]),
+                (    s11.unions,         {descCond}),
             ])
 
             return test()
@@ -564,9 +573,353 @@ class TestMathSet(Tester):
         ])
 
         return test()
-    # TODO: test contains function
-    # TODO: test isSubSetOf function
-    # TODO: test union creation
+    def IsSubSetOf() -> TestResult:
+        """Tests if the isSubSetOf method works as intended"""
+        empty1 = math.Set(math.Set.Empty)
+        empty2 = math.Set(math.Set.Empty, [lambda x: False])
+        fin1 = math.Set({1, 2, 3})
+        des1 = math.Set(math.Set.Descriptive, parents={fin1})
+
+        test = EqualityTester([
+            (des1.isSubSetOf("dummy"),                              math.Result.FALSE),
+            (des1.isSubSetOf(des1),                                 math.Result.TRUE),
+            (des1.isSubSetOf(des1),                                 math.Result.TRUE),
+            (des1.isSubSetOf(fin1),                                 math.Result.TRUE),
+            (empty1.isSubSetOf(1),                                  math.Result.FALSE),
+            (empty1.isSubSetOf(empty1),                             math.Result.TRUE),
+            (empty1.isSubSetOf(empty2),                             math.Result.TRUE),
+            (empty1.isSubSetOf(math.Set(math.Set.Descriptive)),     math.Result.TRUE),
+            (empty1.isSubSetOf(math.Set({1,2})),                    math.Result.TRUE),
+            (empty2.isSubSetOf(1),                                  math.Result.FALSE),
+            (empty2.isSubSetOf(empty1),                             math.Result.TRUE),
+            (empty2.isSubSetOf(empty2),                             math.Result.TRUE),
+            (empty2.isSubSetOf(math.Set(math.Set.Descriptive)),     math.Result.TRUE),
+            (empty2.isSubSetOf(math.Set({1,2})),                    math.Result.TRUE),
+            # TODO: finish
+        ])
+        return test()
+    def Contains() -> TestResult:
+        """Tests if the contains method works as intended"""
+        fin1 = math.Set({ 1, 2,"3"}, [lambda x: math.Result.TRUE if isinstance(x, int) else math.Result.UNSURE])
+        des1 = math.Set(math.Set.Descriptive, [lambda x: isinstance(x, Real)], {fin1})
+        des2 = math.Set(math.Set.Descriptive, [lambda x: isinstance(x, int)])
+        des3 = math.Set(math.Set.Descriptive, [lambda x: math.Result.TRUE if isinstance(x, Real) else math.Result.UNSURE], {fin1})
+        des4 = math.Set(math.Set.Descriptive, [lambda x: math.Result.TRUE if isinstance(x, Real) else math.Result.UNSURE])
+        uni1 = fin1 | des1
+        uni2 = des2 | des4
+
+        test = EqualityTester([
+            (fin1.contains(1),          math.Result.TRUE),
+            (fin1.contains(2),          math.Result.TRUE),
+            (fin1.contains("3"),        math.Result.UNSURE),
+            (fin1.contains("dummy"),    math.Result.FALSE),
+            (des1.contains(2),          math.Result.TRUE),
+            (des1.contains(4),          math.Result.FALSE),
+            (des2.contains(2),          math.Result.TRUE),
+            (des2.contains(4),          math.Result.TRUE),
+            (des3.contains(2),          math.Result.TRUE),
+            (des3.contains("3"),        math.Result.UNSURE),
+            (des3.contains(3),          math.Result.FALSE),
+            (uni1.contains(3),          math.Result.FALSE),
+            (uni1.contains(2),          math.Result.TRUE),
+            (uni1.contains("3"),        math.Result.UNSURE),
+            (uni2.contains(2),          math.Result.TRUE),
+            (uni2.contains(2.5),        math.Result.TRUE),
+            (uni2.contains("dummy"),    math.Result.UNSURE),
+        ])
+        
+        res = test()
+
+        badboi = math.Set(math.Set.Empty)
+        badboi.type = 20
+        try:
+            badboi.contains("dummy")
+            res += FAILED
+        except(ValueError): res += PASSED
+
+        return res
+    def Union() -> TestResult:
+        """Tests if the __or__ method works as intended"""
+        s1 = math.Set(math.Set.Empty)
+        fin1 = math.Set({ 1, 2, 3 })
+        fin2 = math.Set({ 3, 4, 5 })
+        fin3 = math.Set({ 1, 2,"3"}, [lambda x: math.Result.TRUE if isinstance(x, int) else math.Result.UNSURE])
+        desc1 = math.Set(math.Set.Descriptive, [lambda x: math.Result.UNSURE])
+        desc2 = math.Set(math.Set.Descriptive)
+
+        uff1 = s1 | s1
+        uff2 = s1 | fin1
+        uff3 = fin1 | s1
+        uff4 = fin1 | fin2
+        uff5 = fin2 | fin1
+        uff6 = fin1 | fin3
+        uff7 = fin3 | fin1
+        testFinFin = EqualityTester([
+            (uff1.conditions, []),
+            (uff1.sureset,    set()),
+            (uff1.unsureset,  set()),
+            (uff1.parents,    set()),
+            (uff1.allParents, set()),
+            (uff1.type,       math.Set.Type.Finite),
+            (uff1.unions,     set()),
+            (uff2.conditions, []),
+            (uff2.sureset,    { 1, 2, 3 }),
+            (uff2.unsureset,  set()),
+            (uff2.parents,    set()),
+            (uff2.allParents, set()),
+            (uff2.type,       math.Set.Type.Finite),
+            (uff2.unions,     set()),
+            (uff3.conditions, []),
+            (uff3.sureset,    { 1, 2, 3 }),
+            (uff3.unsureset,  set()),
+            (uff3.parents,    set()),
+            (uff3.allParents, set()),
+            (uff3.type,       math.Set.Type.Finite),
+            (uff3.unions,     set()),
+            (uff4.conditions, []),
+            (uff4.sureset,    { 1, 2, 3, 4, 5 }),
+            (uff4.unsureset,  set()),
+            (uff4.parents,    set()),
+            (uff4.allParents, set()),
+            (uff4.type,       math.Set.Type.Finite),
+            (uff4.unions,     set()),
+            (uff5.conditions, []),
+            (uff5.sureset,    { 1, 2, 3, 4, 5 }),
+            (uff5.unsureset,  set()),
+            (uff5.parents,    set()),
+            (uff5.allParents, set()),
+            (uff5.type,       math.Set.Type.Finite),
+            (uff5.unions,     set()),
+            (uff6.conditions, []),
+            (uff6.sureset,    { 1, 2, 3 }),
+            (uff6.unsureset,  { "3" }),
+            (uff6.parents,    set()),
+            (uff6.allParents, set()),
+            (uff6.type,       math.Set.Type.Finite),
+            (uff6.unions,     set()),
+            (uff7.conditions, []),
+            (uff7.sureset,    { 1, 2, 3 }),
+            (uff7.unsureset,  { "3" }),
+            (uff7.parents,    set()),
+            (uff7.allParents, set()),
+            (uff7.type,       math.Set.Type.Finite),
+            (uff7.unions,     set()),
+        ])
+        
+        ufd1 = fin3 | desc1
+        ufd2 = desc1 | fin3
+        testFinDesc = EqualityTester([
+            (ufd1.conditions, []),
+            (ufd1.sureset,    { 1, 2 }),
+            (ufd1.unsureset,  { "3" }),
+            (ufd1.parents,    set()),
+            (ufd1.allParents, set()),
+            (ufd1.type,       math.Set.Type.Union),
+            (ufd1.unions,     {desc1}),
+            (ufd2.conditions, []),
+            (ufd2.sureset,    { 1, 2 }),
+            (ufd2.unsureset,  { "3" }),
+            (ufd2.parents,    set()),
+            (ufd2.allParents, set()),
+            (ufd2.type,       math.Set.Type.Union),
+            (ufd2.unions,     {desc1}),
+        ])
+
+        udd1 = desc1 | desc2
+        udd2 = desc2 | desc1
+        testDescDesc = EqualityTester([
+            (udd1.conditions, []),
+            (udd1.sureset,    set()),
+            (udd1.unsureset,  set()),
+            (udd1.parents,    set()),
+            (udd1.allParents, set()),
+            (udd1.type,       math.Set.Type.Union),
+            (udd1.unions,     {desc1, desc2}),
+            (udd2.conditions, []),
+            (udd2.sureset,    set()),
+            (udd2.unsureset,  set()),
+            (udd2.parents,    set()),
+            (udd2.allParents, set()),
+            (udd2.type,       math.Set.Type.Union),
+            (udd2.unions,     {desc1, desc2}),
+        ])
+
+        ufu1 = fin3 | ufd1
+        ufu2 = ufd1 | fin3
+        ufu3 = fin2 | ufu1
+        ufu4 = ufu1 | fin2
+        testFinUnion = EqualityTester([
+            (ufu1.conditions, []),
+            (ufu1.sureset,    {1, 2}),
+            (ufu1.unsureset,  {"3"}),
+            (ufu1.parents,    set()),
+            (ufu1.allParents, set()),
+            (ufu1.type,       math.Set.Type.Union),
+            (ufu1.unions,     {desc1}),
+            (ufu2.conditions, []),
+            (ufu2.sureset,    {1, 2}),
+            (ufu2.unsureset,  {"3"}),
+            (ufu2.parents,    set()),
+            (ufu2.allParents, set()),
+            (ufu2.type,       math.Set.Type.Union),
+            (ufu2.unions,     {desc1}),
+            (ufu3.conditions, []),
+            (ufu3.sureset,    {1, 2, 3, 4, 5}),
+            (ufu3.unsureset,  {"3"}),
+            (ufu3.parents,    set()),
+            (ufu3.allParents, set()),
+            (ufu3.type,       math.Set.Type.Union),
+            (ufu3.unions,     {desc1}),
+            (ufu4.conditions, []),
+            (ufu4.sureset,    {1, 2, 3, 4, 5}),
+            (ufu4.unsureset,  {"3"}),
+            (ufu4.parents,    set()),
+            (ufu4.allParents, set()),
+            (ufu4.type,       math.Set.Type.Union),
+            (ufu4.unions,     {desc1}),
+        ])
+
+        udu1 = ufd1 | desc1
+        udu2 = desc1 | ufd1
+        udu3 = ufd1 | desc2
+        udu4 = desc2 | ufd1
+        testDescUnion = EqualityTester([
+            (udu1.conditions, []),
+            (udu1.sureset,    {1, 2}),
+            (udu1.unsureset,  {"3"}),
+            (udu1.parents,    set()),
+            (udu1.allParents, set()),
+            (udu1.type,       math.Set.Type.Union),
+            (udu1.unions,     {desc1}),
+            (udu2.conditions, []),
+            (udu2.sureset,    {1, 2}),
+            (udu2.unsureset,  {"3"}),
+            (udu2.parents,    set()),
+            (udu2.allParents, set()),
+            (udu2.type,       math.Set.Type.Union),
+            (udu2.unions,     {desc1}),
+            (udu3.conditions, []),
+            (udu3.sureset,    {1, 2}),
+            (udu3.unsureset,  {"3"}),
+            (udu3.parents,    set()),
+            (udu3.allParents, set()),
+            (udu3.type,       math.Set.Type.Union),
+            (udu3.unions,     {desc1, desc2}),
+            (udu4.conditions, []),
+            (udu4.sureset,    {1, 2}),
+            (udu4.unsureset,  {"3"}),
+            (udu4.parents,    set()),
+            (udu4.allParents, set()),
+            (udu4.type,       math.Set.Type.Union),
+            (udu4.unions,     {desc1, desc2}),
+        ])
+
+        uuu1 = ufd1 | udu1
+        uuu2 = udu1 | ufd1
+        uuu3 = (fin1 | desc1) | (fin3 | desc2)
+        uuu4 = (fin3 | desc2) | (fin1 | desc1)
+        testUnionUnion = EqualityTester([
+            (uuu1.conditions, []),
+            (uuu1.sureset,    {1, 2}),
+            (uuu1.unsureset,  {"3"}),
+            (uuu1.parents,    set()),
+            (uuu1.allParents, set()),
+            (uuu1.type,       math.Set.Type.Union),
+            (uuu1.unions,     {desc1}),
+            (uuu2.conditions, []),
+            (uuu2.sureset,    {1, 2}),
+            (uuu2.unsureset,  {"3"}),
+            (uuu2.parents,    set()),
+            (uuu2.allParents, set()),
+            (uuu2.type,       math.Set.Type.Union),
+            (uuu2.unions,     {desc1}),
+            (uuu3.conditions, []),
+            (uuu3.sureset,    {1, 2, 3}),
+            (uuu3.unsureset,  {"3"}),
+            (uuu3.parents,    set()),
+            (uuu3.allParents, set()),
+            (uuu3.type,       math.Set.Type.Union),
+            (uuu3.unions,     {desc1, desc2}),
+            (uuu4.conditions, []),
+            (uuu4.sureset,    {1, 2, 3}),
+            (uuu4.unsureset,  {"3"}),
+            (uuu4.parents,    set()),
+            (uuu4.allParents, set()),
+            (uuu4.type,       math.Set.Type.Union),
+            (uuu4.unions,     {desc1, desc2}),
+        ])
+
+        p1 = math.Set({1, 2, 3}, parents={math.Sets.R})
+        p2 = math.Set({1, 2, 3}, parents={math.Sets.C})
+        p3 = math.Set({1, 2, 3}, parents={p2})
+
+        up1 = p1 | p2
+        up2 = p2 | p1
+        up3 = p3 | p1
+        up4 = p1 | p3
+        testParents = EqualityTester([
+            (up1.conditions, []),
+            (up1.sureset,    {1, 2, 3}),
+            (up1.unsureset,  set()),
+            (up1.parents,    {math.Sets.C}),
+            (up1.allParents, {math.Sets.C}),
+            (up1.type,       math.Set.Type.Finite),
+            (up1.unions,     set()),
+            (up2.conditions, []),
+            (up2.sureset,    {1, 2, 3}),
+            (up2.unsureset,  set()),
+            (up2.parents,    {math.Sets.C}),
+            (up2.allParents, {math.Sets.C}),
+            (up2.type,       math.Set.Type.Finite),
+            (up2.unions,     set()),
+            (up3.conditions, []),
+            (up3.sureset,    {1, 2, 3}),
+            (up3.unsureset,  set()),
+            (up3.parents,    {math.Sets.C}),
+            (up3.allParents, {math.Sets.C}),
+            (up3.type,       math.Set.Type.Finite),
+            (up3.unions,     set()),
+            (up4.conditions, []),
+            (up4.sureset,    {1, 2, 3}),
+            (up4.unsureset,  set()),
+            (up4.parents,    {math.Sets.C}),
+            (up4.allParents, {math.Sets.C}),
+            (up4.type,       math.Set.Type.Finite),
+            (up4.unions,     set()),
+        ])
+
+        res = testFinFin() + testFinDesc() + testDescDesc() + testFinUnion() + testDescUnion() + testUnionUnion() + testParents()
+
+        badboi1 = math.Set({1, 2, 3})
+        badboi1.type = 20
+        try:
+            badboi1|badboi1
+            res += FAILED
+        except(ValueError): res += PASSED
+        try:
+            fin1|badboi1
+            res += FAILED
+        except(ValueError): res += PASSED
+        try:
+            desc1|badboi1
+            res += FAILED
+        except(ValueError): res += PASSED
+        try:
+            uuu1|badboi1
+            res += FAILED
+        except(ValueError): res += PASSED
+
+        try:
+            fin1 | "dummy"
+            res += FAILED
+        except(TypeError): res += PASSED
+        
+        try:
+            "dummy" | fin1
+            res += FAILED
+        except(TypeError): res += PASSED
+
+        return res
     StringRepresentation = ReprTester([
         (math.Set(math.Set.Empty),                                                                                                      "{}"                                                            ),
         (math.Set(math.Set.Descriptive),                                                                                                "Descriptive Set"                                               ),
@@ -580,36 +933,6 @@ class TestMathSet(Tester):
         (math.Set({1}, [lambda x: math.Result.UNSURE]) | math.Set(math.Set.Descriptive),                                                "The union of 1 descriptive set(s) and possibly {1}"            ),
         (math.Set({1, 2, "3"}, [lambda x: math.Result.UNSURE if type(x)!=int else math.Result.TRUE]) | math.Set(math.Set.Descriptive),  "The union of 1 descriptive set(s), {1, 2} and possibly {'3'}"  ),
     ])
-    
-    # TODO: split this Empty test over the member function tests when they are written
-    def Empty() -> TestResult:
-        """Tests the empty set"""
-        empty1 = math.Set(math.Set.Empty)
-        empty2 = math.Set(math.Set.Empty, [lambda x: False])
-
-        if empty1.contains(1)                                       != math.Result.FALSE:       return FAILED
-        if empty1.contains(empty1)                                  != math.Result.FALSE:       return FAILED
-        if empty1.contains(empty2)                                  != math.Result.FALSE:       return FAILED
-        if empty1.contains(math.Set)                                != math.Result.FALSE:       return FAILED
-        if empty1.contains(None)                                    != math.Result.FALSE:       return FAILED
-        if empty1.isSubSetOf(1)                                     != math.Result.FALSE:       return FAILED
-        if empty1.isSubSetOf(empty1)                                != math.Result.TRUE:        return FAILED
-        if empty1.isSubSetOf(empty2)                                != math.Result.TRUE:        return FAILED
-        if empty1.isSubSetOf(math.Set(math.Set.Descriptive))        != math.Result.TRUE:        return FAILED
-        if empty1.isSubSetOf(math.Set({1,2}))                       != math.Result.TRUE:        return FAILED
-        
-        if empty2.contains(1)                                       != math.Result.FALSE:       return FAILED
-        if empty2.contains(empty1)                                  != math.Result.FALSE:       return FAILED
-        if empty2.contains(empty2)                                  != math.Result.FALSE:       return FAILED
-        if empty2.contains(math.Set)                                != math.Result.FALSE:       return FAILED
-        if empty2.contains(None)                                    != math.Result.FALSE:       return FAILED
-        if empty2.isSubSetOf(1)                                     != math.Result.FALSE:       return FAILED
-        if empty2.isSubSetOf(empty1)                                != math.Result.TRUE:        return FAILED
-        if empty2.isSubSetOf(empty2)                                != math.Result.TRUE:        return FAILED
-        if empty2.isSubSetOf(math.Set(math.Set.Descriptive))        != math.Result.TRUE:        return FAILED
-        if empty2.isSubSetOf(math.Set({1,2}))                       != math.Result.TRUE:        return FAILED
-
-        return PASSED
 
 class TestMathRelation(Tester):
     """Tests if the Relation class works as intended"""

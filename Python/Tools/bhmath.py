@@ -52,7 +52,7 @@ class Set:
         Descriptive=1
         Union=2
 
-    def _private_init_(self, type:Type, sureset:set, unsureset:set, unions:list[Self], conditions:list[Callable[[Any],Result]], parents:set[Self]):
+    def _private_init_(self, type:Type, sureset:set, unsureset:set, unions:set[Self], conditions:list[Callable[[Any],Result]], parents:set[Self]):
         self.type = type
 
         self.sureset = sureset
@@ -86,9 +86,9 @@ class Set:
         if len(parents) != 0 and set([type(parent) for parent in parents]) != {Set}: raise TypeError("All parents should be of type Set")
 
         if type(base) == Set._DescriptiveTypeIndicator:
-            self._private_init_(Set.Type.Descriptive, set(), set(), [], conditions, parents)
+            self._private_init_(Set.Type.Descriptive, set(), set(), set(), conditions, parents)
         elif type(base) == Set._EmptyIndicator:
-            self._private_init_(Set.Type.Finite, set(), set(), [], [], set())
+            self._private_init_(Set.Type.Finite, set(), set(), set(), [], set())
         elif type(base) == list or type(base) == set:
             sureset = set()
             unsureset = set()
@@ -97,12 +97,12 @@ class Set:
                 if Result.FALSE in results: continue
                 if Result.UNSURE in results: unsureset.add(item)
                 else: sureset.add(item)
-            self._private_init_(Set.Type.Finite, sureset, unsureset, [], [], parents)
+            self._private_init_(Set.Type.Finite, sureset, unsureset, set(), [], parents)
         elif type(base) == Set:
             parents = parents.copy()
             parents.add(base)
             if base.type == Set.Type.Descriptive:
-                self._private_init_(Set.Type.Descriptive, set(), set(), [], conditions, parents)
+                self._private_init_(Set.Type.Descriptive, set(), set(), set(), conditions, parents)
             elif base.type == Set.Type.Finite:
                 sureset = set()
                 unsureset = set()
@@ -115,7 +115,7 @@ class Set:
                     results = [cond(item) for cond in conditions] + [parent.contains(item) for parent in parents]
                     if Result.FALSE in results: continue
                     unsureset.add(item)
-                self._private_init_(Set.Type.Finite, sureset, unsureset, [], [], parents)
+                self._private_init_(Set.Type.Finite, sureset, unsureset, set(), [], parents)
             elif base.type == Set.Type.Union:
                 sureset = set()
                 unsureset = set()
@@ -146,7 +146,8 @@ class Set:
 
         if self.type == Set.Type.Descriptive:
             return meetsCond
-        elif self.type == Set.Type.Union:
+        
+        if self.type == Set.Type.Union:
             if x in self.sureset: return Result.TRUE
             isFalse = True
             if x in self.unsureset: isFalse = False
@@ -156,8 +157,8 @@ class Set:
                 if r == Result.UNSURE: isFalse = False
             if isFalse: return Result.FALSE
             return Result.UNSURE
-        else:
-            raise ValueError("Unknown Set.Type")
+
+        raise ValueError("Unknown Set.Type")
         
     def isSubSetOf(self, x:Any) -> Result:
         if type(x) != Set: return Result.FALSE
@@ -213,14 +214,15 @@ class Set:
                     parent1IsAncestor = True
                     break
             if not parent1IsAncestor: parents.add(parent1)
+            
         res = Set(Set.Empty)
         if self.type == Set.Type.Finite:
             if x.type == Set.Type.Finite:
                 sureset = self.sureset | x.sureset
                 unsureset = (self.unsureset | x.unsureset) - sureset
-                res._private_init_(Set.Type.Finite, sureset, unsureset, [], [], parents)
+                res._private_init_(Set.Type.Finite, sureset, unsureset, set(), [], parents)
             elif x.type == Set.Type.Descriptive:
-                res._private_init_(Set.Type.Union, self.sureset, self.unsureset, [x], [], parents)
+                res._private_init_(Set.Type.Union, self.sureset, self.unsureset, {x}, [], parents)
             elif x.type == Set.Type.Union:
                 sureset = self.sureset | x.sureset
                 unsureset = (self.unsureset | x.unsureset) - sureset
@@ -229,22 +231,24 @@ class Set:
                 raise ValueError("Unknown Set.Type")
         elif self.type == Set.Type.Descriptive:
             if x.type == Set.Type.Finite:
-                res._private_init_(Set.Type.Union, x.sureset, x.unsureset, [self], [], parents)
+                res._private_init_(Set.Type.Union, x.sureset, x.unsureset, {self}, [], parents)
             elif x.type == Set.Type.Descriptive:
-                res._private_init_(Set.Type.Union, set(), set(), [self, x], [], parents)
+                res._private_init_(Set.Type.Union, set(), set(), {self, x}, [], parents)
             elif x.type == Set.Type.Union:
-                res._private_init_(Set.Type.Union, set(), set(), [self]+x.unions, [], parents)
+                res._private_init_(Set.Type.Union, x.sureset, x.unsureset, {self} | x.unions, [], parents)
             else:
                 raise ValueError("Unknown Set.Type")
         elif self.type == Set.Type.Union:
             if x.type == Set.Type.Finite:
                 sureset = self.sureset | x.sureset
                 unsureset = (self.unsureset | x.unsureset) - sureset
-                res._private_init_(Set.Type.Union, sureset, unsureset, x.unions, [], parents)
+                res._private_init_(Set.Type.Union, sureset, unsureset, self.unions, [], parents)
             elif x.type == Set.Type.Descriptive:
-                res._private_init_(Set.Type.Union, set(), set(), [x]+self.unions, [], parents)
+                res._private_init_(Set.Type.Union, self.sureset, self.unsureset, {x} | self.unions, [], parents)
             elif x.type == Set.Type.Union:
-                res._private_init_(Set.Type.Union, set(), set(), self.unions+x.unions, [], parents)
+                sureset = self.sureset | x.sureset
+                unsureset = (self.unsureset | x.unsureset) - sureset
+                res._private_init_(Set.Type.Union, sureset, unsureset, self.unions | x.unions, [], parents)
             else:
                 raise ValueError("Unknown Set.Type")
         else:
@@ -362,9 +366,9 @@ class SymbolicInfinity:
     
 SymInf = SymbolicInfinity(True)
 
-class Interval:
+class Interval(Set):
     def __init__(self, a:Union[Real,SymbolicInfinity], b:Union[Real,SymbolicInfinity], includeA:bool=False, includeB:bool=False):
-        self.set = Set(_RealNumbers, [lambda x: isinstance(x,Real) and x>=a and x<=b and (includeA or x!=a) and (includeB or x!=b)])
+        super(Interval, self).__init__(_RealNumbers, [lambda x: isinstance(x,Real) and x>=a and x<=b and (includeA or x!=a) and (includeB or x!=b)])
         self.a = a
         self.b = b
         self.includeA = includeA
@@ -373,9 +377,6 @@ class Interval:
         if b == SymInf and includeB: raise ValueError("\u221e cannot be included. Set includeB to False")
         if a == b and (not includeA or not includeB): raise ValueError("If a and b are equal, both includeA and includeB need to be True")
         if b < a: raise ValueError("a must be less than b")
-    
-    def contains(self, x:Any)->Result:
-        return self.set.contains(x)
 
     def __repr__(self)->str:
         p1="[" if self.includeA else "]"
