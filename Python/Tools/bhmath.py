@@ -163,10 +163,14 @@ class Set:
     def isSubSetOf(self, x:Any) -> Result:
         if type(x) != Set: return Result.FALSE
         if self is x: return Result.TRUE
-        if x in self.allParents: return Result.TRUE
+        
+        isSure = True
+        for parent in self.allParents:
+            res = parent.isSubSetOf(x)
+            if res == Result.TRUE: return Result.TRUE
+            if res == Result.UNSURE: isSure = False
 
         if self.type == Set.Type.Finite:
-            isSure = True
             for item in self.sureset:
                 res = x.contains(item)
                 if res == Result.FALSE: return Result.FALSE
@@ -176,14 +180,23 @@ class Set:
                 if res != Result.TRUE: isSure = False
             if isSure: return Result.TRUE
             return Result.UNSURE
-        if x.type == Set.Type.Finite:
-            if self.type == Set.Type.Descriptive: return Result.UNSURE
-            if self.type == Set.Type.Union:
-                for union in self.unions:
-                    r = union.isSubSetOf(x)
-                    if r != Result.TRUE: return Result.UNSURE
-                return Result.TRUE
-        return Result.UNSURE
+        if self.type == Set.Type.Descriptive:
+            return Result.UNSURE
+        if self.type == Set.Type.Union:
+            for item in self.sureset:
+                res = x.contains(item)
+                if res == Result.FALSE: return Result.FALSE
+                if res == Result.UNSURE: isSure = False
+            for item in self.unsureset:
+                res = x.contains(item)
+                if res != Result.TRUE: isSure = False
+            for union in self.unions:
+                res = union.isSubSetOf(x)
+                if res == Result.FALSE: return Result.FALSE
+                if res == Result.UNSURE: isSure = False
+            if not isSure: return Result.UNSURE
+            return Result.TRUE
+        raise ValueError("Unknown Set.Type")
     
     def __repr__(self):
         if self.type == Set.Type.Descriptive:

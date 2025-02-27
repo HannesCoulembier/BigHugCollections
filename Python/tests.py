@@ -578,7 +578,11 @@ class TestMathSet(Tester):
         empty1 = math.Set(math.Set.Empty)
         empty2 = math.Set(math.Set.Empty, [lambda x: False])
         fin1 = math.Set({1, 2, 3})
+        fin2 = math.Set({1, 2, 3, 4})
+        fin3 = math.Set({ 1, 2,"3"}, [lambda x: math.Result.TRUE if isinstance(x, int) else math.Result.UNSURE])
+        fin4 = math.Set({ 1, 2,"3"})
         des1 = math.Set(math.Set.Descriptive, parents={fin1})
+        uni1 = des1 | fin2
 
         test = EqualityTester([
             (des1.isSubSetOf("dummy"),                              math.Result.FALSE),
@@ -595,7 +599,16 @@ class TestMathSet(Tester):
             (empty2.isSubSetOf(empty2),                             math.Result.TRUE),
             (empty2.isSubSetOf(math.Set(math.Set.Descriptive)),     math.Result.TRUE),
             (empty2.isSubSetOf(math.Set({1,2})),                    math.Result.TRUE),
-            # TODO: finish
+            (fin1.isSubSetOf(fin2),                                 math.Result.TRUE),
+            (fin2.isSubSetOf(fin1),                                 math.Result.FALSE),
+            (fin1.isSubSetOf(empty2),                               math.Result.FALSE),
+            (fin3.isSubSetOf(fin2),                                 math.Result.UNSURE),
+            (fin4.isSubSetOf(fin3),                                 math.Result.UNSURE),
+            (fin3.isSubSetOf(fin4),                                 math.Result.TRUE),
+            (fin4.isSubSetOf(fin2),                                 math.Result.FALSE),
+            (des1.isSubSetOf(fin4),                                 math.Result.UNSURE),
+            (uni1.isSubSetOf(fin4),                                 math.Result.FALSE),
+            (uni1.isSubSetOf(fin2),                                 math.Result.TRUE),
         ])
         return test()
     def Contains() -> TestResult:
