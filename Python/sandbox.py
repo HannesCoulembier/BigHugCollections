@@ -53,7 +53,9 @@ rel1 = math.Relation(oneTwo, finGen, lambda a, b=2: a%2==b%2)
 print(rel1(3,1))
 
 f1 = math.Function(lambda x:3*x, oneTwo, finGenCond)
+f2 = math.RealFunction(lambda x:3*x, math.Sets.R)
 print(f1(2))
+print(f2(21))
 
 int1 = math.Interval(2,2,True,True)
 print(int1)

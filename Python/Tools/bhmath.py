@@ -302,27 +302,6 @@ class Function:
         self.domain = domain
         self.codomain = codomain
 
-        # associated functions
-        self.Inverse = None
-        self.Derivative = None
-        self.Integral = None
-        
-        # Maybe for future expansions?
-        # self.properties = {
-        #     "Injective":        None,
-        #     "Surjective":       None,
-        #     "Bijective":        None,   # equivalent to invertable
-        #     "Identity":         None,   # wether or not the Function is the identity function
-        #     "Constant":         None,   # Function gives constant result, regardless of input
-        #     "Even":             None,
-        #     "Odd":              None,
-        #     "Continous":        None,
-        #     "Differentiable":   None,   # Has a derivative
-        #     "Integrable":       None,   # Has an integral
-        #     "Smooth":           None,   # Is infinitely differentiable
-        #     "Analytic":         None,   # Any region can be defined by a convergent power series
-        # }
-
         if type(domain) != Set: raise TypeError("Expected domain to be of type Set")
         if type(codomain) != Set: raise TypeError("Expected codomain to be of type Set")
         if not isinstance(func, Callable): raise TypeError("Expected func parameter to be callable")
@@ -330,26 +309,40 @@ class Function:
 
         self.relation = Relation(domain, codomain, lambda x, y: self(x)==y)
 
-    def inv(self)->Self:
-        if self.invFunc == None: raise ValueError("This function has no inverse specified")
-        return Function(self.invFunc, self.codomain, self.domain, self.func)
-
     def __call__(self, x:Any)->Any:
-        if self.domain.contains(x) == Result.FALSE: raise log("x is not part of the domain of this function", Severity.warn)
+        inDomain = self.domain.contains(x)
+        if inDomain == Result.FALSE: raise ValueError("x is not part of the domain of this function")
 
         try:
             y = self.func(x)
         except:
-            raise log("x is not part of the domain of this function", Severity.warn)
-        if self.codomain.contains(y) == Result.FALSE: log("This function is not correctly defined, as it yielded a result that was outside of its codomain", Severity.warn)
-
+            if inDomain == Result.TRUE:
+                raise ValueError(f"This function is not well defined as trying to evaluate it at {x} gave an error despite it being in the functions domain. Either the domain or function definitions are incorrectly defined.")
+            else:
+                raise ValueError("x is not part of the domain of this function or this function is not well defined")
+            
+        if self.codomain.contains(y) == Result.FALSE:
+            raise ValueError("This function is not correctly defined, as it yielded a result that was outside of its codomain")
         return y
 
 _ComplexNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Complex)])
 _RealNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Real)], parents={_ComplexNumbers})
 _AllFunctions = Set(Set.Descriptive, [lambda x:isinstance(x, Function)])
-_ComplexFunctions = Set(Set.Descriptive, [lambda x: _AllFunctions.contains(x) & x.domain.isSubset(_ComplexNumbers)], parents={_AllFunctions})
-_RealFunctions = Set(Set.Descriptive, [lambda x: _ComplexFunctions.contains(x) & x.domain.isSubset(_RealNumbers)], parents={_AllFunctions, _ComplexFunctions})
+
+class ComplexFunction(Function):
+    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=_ComplexNumbers):
+        Function.__init__(self, func, domain, codomain)
+        if self.domain.isSubSetOf(_ComplexNumbers) != Result.TRUE: raise ValueError("domain must be a subset of the complex numbers. This can be annotated by including the complex numbers as a parent of the domain at creation")
+        if self.codomain.isSubSetOf(_ComplexNumbers) != Result.TRUE: raise ValueError("codomain must be a subset of the complex numbers. This can be annotated by including the complex numbers as a parent of the codomain at creation")
+
+class RealFunction(ComplexFunction):
+    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=_RealNumbers):
+        Function.__init__(self, func, domain, codomain)
+        if self.domain.isSubSetOf(_RealNumbers) != Result.TRUE: raise ValueError("domain must be a subset of the real numbers. This can be annotated by including the real numbers as a parent of the domain at creation")
+        if self.codomain.isSubSetOf(_RealNumbers) != Result.TRUE: raise ValueError("codomain must be a subset of the real numbers. This can be annotated by including the real numbers as a parent of the codomain at creation")
+
+_ComplexFunctions = Set(Set.Descriptive, [lambda x: isinstance(x, ComplexFunction)], parents={_AllFunctions})
+_RealFunctions = Set(Set.Descriptive, [lambda x: isinstance(x, RealFunction)], parents={_ComplexFunctions})
 
 class SymbolicInfinity:
     def __init__(self, pos=True):
