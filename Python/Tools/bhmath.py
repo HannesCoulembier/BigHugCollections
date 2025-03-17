@@ -3,7 +3,7 @@ import Tools.bhconstants as Constants
 
 from math import sqrt
 from enum import IntEnum, Enum
-from typing import Union, Iterable, Callable, Iterator, Any, Self
+from typing import Union, Iterable, Callable, Iterator, Any, Self, Dict
 from numbers import Complex, Real, Rational, Integral
 import inspect
 
@@ -268,6 +268,10 @@ class Set:
             raise ValueError("Unknown Set.Type")
         return res
 
+_AllBooleanDomains = Set(Set.Descriptive, [lambda x: isinstance(x, Set) and x.type == Set.Type.Finite and x.unsureset == set() and len(x.sureset) == 2]) # All sets with exactly 2 distinct elements can be mapped upon {True, False}, hence they are a boolean domain
+_ComplexNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Complex)])
+_RealNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Real)], parents={_ComplexNumbers})
+
 class Relation:
     def __init__(self, setA:Set, setB:Set, relation:Callable[[Any, Any], Union[Result, bool]]):
         self.setA = setA
@@ -297,15 +301,17 @@ class Relation:
             raise TypeError("This Relation has an incorrectly defined relation function, as it did not return a boolean or a Result")
 
 class Function:
-    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=Set(Set.Descriptive)):
+    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=Set(Set.Descriptive), info:Dict[str, Any]={}):
         self.func = func
         self.domain = domain
         self.codomain = codomain
+        self.info = info
 
-        if type(domain) != Set: raise TypeError("Expected domain to be of type Set")
-        if type(codomain) != Set: raise TypeError("Expected codomain to be of type Set")
+        if not isinstance(domain, Set): raise TypeError("Expected domain to be of type Set")
+        if not isinstance(codomain, Set): raise TypeError("Expected codomain to be of type Set")
         if not isinstance(func, Callable): raise TypeError("Expected func parameter to be callable")
         if len(inspect.signature(func).parameters) != 1: raise TypeError("Expected func parameter to have exactly one argument")
+        if not isinstance(info, Dict): raise TypeError("Expected info parameter to be a dictionary")
 
         self.relation = Relation(domain, codomain, lambda x, y: self(x)==y)
 
@@ -325,22 +331,21 @@ class Function:
             raise ValueError("This function is not correctly defined, as it yielded a result that was outside of its codomain")
         return y
 
-_ComplexNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Complex)])
-_RealNumbers = Set(Set.Descriptive, [lambda x:isinstance(x, Real)], parents={_ComplexNumbers})
-_AllFunctions = Set(Set.Descriptive, [lambda x:isinstance(x, Function)])
-
 class ComplexFunction(Function):
-    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=_ComplexNumbers):
-        Function.__init__(self, func, domain, codomain)
+    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=_ComplexNumbers, info:Dict[str, Any]={}):
+        super().__init__(func, domain, codomain, info)
+        
         if self.domain.isSubSetOf(_ComplexNumbers) != Result.TRUE: raise ValueError("domain must be a subset of the complex numbers. This can be annotated by including the complex numbers as a parent of the domain at creation")
         if self.codomain.isSubSetOf(_ComplexNumbers) != Result.TRUE: raise ValueError("codomain must be a subset of the complex numbers. This can be annotated by including the complex numbers as a parent of the codomain at creation")
 
 class RealFunction(ComplexFunction):
-    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=_RealNumbers):
-        Function.__init__(self, func, domain, codomain)
+    def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=_RealNumbers, info:Dict[str, Any]={}):
+        super().__init__(func, domain, codomain, info)
+        
         if self.domain.isSubSetOf(_RealNumbers) != Result.TRUE: raise ValueError("domain must be a subset of the real numbers. This can be annotated by including the real numbers as a parent of the domain at creation")
         if self.codomain.isSubSetOf(_RealNumbers) != Result.TRUE: raise ValueError("codomain must be a subset of the real numbers. This can be annotated by including the real numbers as a parent of the codomain at creation")
 
+_AllFunctions = Set(Set.Descriptive, [lambda x:isinstance(x, Function)])
 _ComplexFunctions = Set(Set.Descriptive, [lambda x: isinstance(x, ComplexFunction)], parents={_AllFunctions})
 _RealFunctions = Set(Set.Descriptive, [lambda x: isinstance(x, RealFunction)], parents={_ComplexFunctions})
 
