@@ -1,3 +1,4 @@
+from __future__ import annotations
 from Tools.bhlog import log, Severity
 import Tools.bhconstants as Constants
 
@@ -301,6 +302,47 @@ class Relation:
             raise TypeError("This Relation has an incorrectly defined relation function, as it did not return a boolean or a Result")
 
 class Function:
+    class FunctionRecipe:
+        def __init__(self, recipe:Callable[[], Function]):
+            if not isinstance(recipe, Callable): raise TypeError("recipe must be callable")
+            if len(inspect.signature(recipe).parameters) != 0: raise TypeError("recipes can not have arguments")
+            self.recipe = recipe
+        def generate(self) -> Function:
+            res = self.recipe()
+            if not isinstance(res, Function): raise TypeError(f"Expected recipe to return a Function, but got type {type(res)}")
+            return res
+
+    class FunctionRelatives:
+        def __init__(self, relatives:Dict[str, Union[Self, Function.FunctionRecipe]]):
+            self.relatives = relatives
+            if not isinstance(relatives, Dict): raise TypeError("relatives must be of type Dict")
+            for key in relatives.keys():
+                if not isinstance(key, str): raise TypeError("All keys of relatives must be of type string")
+                if not (isinstance(relatives[key], Function) or isinstance(relatives[key], Function.FunctionRecipe)): raise TypeError("All values of relatives must be of type Function or FunctionRecipe")
+            self._cache = {}
+
+            # All possible relatives are defined here:
+            for key in relatives.keys():
+                if not key in [
+                    "Inverse"
+                ]: raise ValueError(f"Unknown relative name '{key}'")
+
+        def __getitem__(self, x:str) -> Self:
+            if not isinstance(x, str): raise KeyError("Relative name must be of type string")
+            if x in self._cache.keys(): return self._cache[x]
+            if not x in self.relatives.keys(): raise KeyError(f"This Function does not have a relative called '{x}'")
+
+            rel = self.relatives[x]
+            if isinstance(rel, Function):
+                self._cache[x]=rel
+                return rel
+            elif isinstance(rel, Function.FunctionRecipe):
+                rel = rel.generate()
+                self._cache[x]=rel
+                return rel
+            else:
+                raise ValueError(f"Invalid relative '{x}'. All relatives must be of type Function or FunctionRecipe")
+
     def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=Set(Set.Descriptive), info:Dict[str, Any]={}):
         self.func = func
         self.domain = domain
@@ -312,6 +354,8 @@ class Function:
         if not isinstance(func, Callable): raise TypeError("Expected func parameter to be callable")
         if len(inspect.signature(func).parameters) != 1: raise TypeError("Expected func parameter to have exactly one argument")
         if not isinstance(info, Dict): raise TypeError("Expected info parameter to be a dictionary")
+
+        if "Relatives" not in self.info.keys(): self.info["Relatives"] = Function.FunctionRelatives({})
 
         self.relation = Relation(domain, codomain, lambda x, y: self(x)==y)
 
@@ -330,6 +374,9 @@ class Function:
         if self.codomain.contains(y) == Result.FALSE:
             raise ValueError("This function is not correctly defined, as it yielded a result that was outside of its codomain")
         return y
+    
+    @property
+    def inv(self)->Function: return self.info["Relatives"]["Inverse"]
 
 class ComplexFunction(Function):
     def __init__(self, func:Callable[[Any], Any], domain:Set, codomain:Set=_ComplexNumbers, info:Dict[str, Any]={}):
