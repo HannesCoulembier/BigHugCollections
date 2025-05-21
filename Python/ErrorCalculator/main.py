@@ -2,41 +2,53 @@ import matplotlib.pyplot as pyplot
 import numpy as np
 import csv
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import Tools.bhmath as bhmath
+def calcRanges(fin, fout, func, divisions):
+    # Parse input file into an array of values where every value is an array of parameter ranges -> [[[value1param1Min, value1param1Max], [value1param2Min, value1param2Max], ...], [[value2param1Min, value2param1Max], [value2param2Min, value2param2Max], ...], ...]
+    with open(fin, 'r') as file:
+        values = np.array([[[float(min(param.split(' '))), float(max(param.split(' ')))] for param in row] for row in csv.reader(file, delimiter=',')])
 
-with open('Python/ErrorCalculator/data_in.csv', 'r') as file:
-    ranges = [bhmath.Interval(float(range[0]), float(range[1]), True, True) for range in csv.reader(file, delimiter=',')]
-with open('Python/ErrorCalculator/function.txt') as file:
-    func = eval(file.read())
+    result = []
+    paramCount = len(values[0])
+    for value in values:
+        # Create all x values to be evaluated
+        xValues = np.stack(np.meshgrid(*[np.linspace(param[0], param[1], divisions) for param in value], indexing='ij'), axis=-1).flatten()
+        xValues.shape = (divisions**paramCount, paramCount)
 
-valuesPerRange = 1000
-valuesPerRender = 1000
-margin = 0.05
+        # Find the min and the max values of f(x) over all x values
+        yValues = np.array(list(map(lambda x:func(*x), xValues)))
+        result.append([np.min(yValues), np.max(yValues)])
 
-rangeBorders = np.concatenate([[range.a,range.b] for range in ranges])
-minReached = np.min(rangeBorders)
-maxReached = np.max(rangeBorders)
-left = minReached - (maxReached-minReached)*margin
-right = maxReached + (maxReached-minReached)*margin
+    # Write result into output file
+    with open(fout, 'w', newline='') as file:
+        writer = csv.writer(file, delimiter=' ')
+        for value in result:
+            writer.writerow(value)
 
-xRender = np.linspace(left, right, valuesPerRender)
-yRender = np.array(list(map(func, xRender)))
-pyplot.plot(xRender, yRender, color="b", label="base function")
+def plotRanges(fin, func, rangeDivisions, renderDivisions):
+    # Parse input file into an array of values where every value is an array of parameter ranges -> [[[value1param1Min, value1param1Max], [value1param2Min, value1param2Max], ...], [[value2param1Min, value2param1Max], [value2param2Min, value2param2Max], ...], ...]
+    with open(fin, 'r') as file:
+        values = np.array([[[float(min(param.split(' '))), float(max(param.split(' ')))] for param in row] for row in csv.reader(file, delimiter=',')])
+        if len(values[0]) != 1: print("Can only plotRanges when function takes exactly one parameter")
 
-result = []
-for range in ranges:
-    x = np.linspace(range.a,range.b,valuesPerRange, endpoint=True)
-    y = np.array(list(map(func, x)))
-    result.append(bhmath.Interval(np.min(y), np.max(y), True, True))
-    pyplot.plot(x, y, color="r", label="values reached")
+    margin = 0.05
 
-pyplot.show()
+    rangeBorders = values.flatten()
+    minReached = np.min(rangeBorders)
+    maxReached = np.max(rangeBorders)
+    left = minReached - (maxReached-minReached)*margin
+    right = maxReached + (maxReached-minReached)*margin
 
-# If the plot is closed, we return the new ranges
-with open('Python/ErrorCalculator/data_out.csv', 'w', newline='') as file:
-    writer = csv.writer(file, delimiter=',')
-    for range in result:
-        writer.writerow([range.a, range.b])
+    xRender = np.linspace(left, right, renderDivisions)
+    yRender = np.array(list(map(func, xRender)))
+    pyplot.plot(xRender, yRender, color="b", label="base function")
+
+    for range in values[:,0]:
+        x = np.linspace(range[0],range[1],rangeDivisions, endpoint=True)
+        y = np.array(list(map(func, x)))
+        pyplot.plot(x, y, color="r", label="values reached")
+
+    pyplot.show()
+
+func = lambda x,y:x**2+y
+calcRanges('Python/ErrorCalculator/data_in.csv', 'Python/ErrorCalculator/data_out.csv', func, 1000)
+# plotRanges('Python/ErrorCalculator/data_in.csv', func, 10, 100)
